@@ -851,7 +851,7 @@ function moveHighlight(){
     hl.style.opacity='0'; return;
   }
   const item=list.children[selectedIdx];
-  const top = item.offsetTop + list.offsetTop;
+  const top = item.offsetTop;
   hl.style.top = top+'px';
   hl.style.height = item.offsetHeight+'px';
   hl.style.opacity = '1';
