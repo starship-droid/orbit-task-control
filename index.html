@@ -7,9 +7,9 @@
 <meta name="description" content="ORBIT: Personal Task Control. A sleek sci-fi task management app with keyboard shortcuts and real-time visual feedback.">
 <meta property="og:title" content="ORBIT — Task Control">
 <meta property="og:description" content="Personal Task Control — Alpha Station. Manage your missions with sci-fi style.">
-<meta property="og:image" content="https://orbit-control.netlify.app/orbit-preview-100.png">
+<meta property="og:image" content="https://orbit-control.sophieallen.space/orbit-preview-100.png">
 <meta property="og:type" content="website">
-<meta name="twitter:image" content="https://orbit-control.netlify.app/orbit-preview-100.png">
+<meta name="twitter:image" content="https://orbit-control.sophieallen.space/orbit-preview-100.png">
 <link rel="icon" type="image/svg+xml" href="orbit-control.svg">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 <style>
@@ -17,292 +17,147 @@
 
 :root {
   --void: #02020f;
-  --deep: #060616;
   --glass-bg: rgba(8,12,35,0.55);
   --glass-border: rgba(77,201,255,0.18);
   --glow-blue: #4dc9ff;
   --glow-purple: #b060ff;
   --glow-teal: #00ffcc;
-  --glow-pink: #ff5cf7;
-  --glow-orange: #ff9d3d;
   --text-primary: rgba(255,255,255,0.95);
   --text-dim: rgba(180,210,255,0.5);
   --text-ghost: rgba(120,160,220,0.3);
 }
 
-html, body {
-  height: 100%;
-  overflow: hidden;
-  background: var(--void);
-  color: var(--text-primary);
-  font-family: 'Rajdhani', sans-serif;
-  font-size: 16px;
-  user-select: none;
-}
+html, body { height:100%; overflow:hidden; background:var(--void); color:var(--text-primary); font-family:'Rajdhani',sans-serif; font-size:16px; user-select:none; }
 
-#cosmos {
-  position: fixed; inset: 0; z-index: 0;
-  background:
-    radial-gradient(ellipse 80% 60% at 20% 30%, #1a0533 0%, transparent 60%),
-    radial-gradient(ellipse 60% 80% at 80% 70%, #050d2e 0%, transparent 60%),
-    var(--void);
-}
-
-#starfield { position: fixed; inset: 0; z-index: 1; pointer-events: none; }
-
-.nebula-cloud {
-  position: fixed; border-radius: 50%; filter: blur(60px); pointer-events: none;
-  animation: nebula-drift 20s ease-in-out infinite alternate;
-}
-@keyframes nebula-drift {
-  0% { transform: translate(0,0) scale(1); }
-  100% { transform: translate(30px,-20px) scale(1.05); }
-}
-
-#scanlines {
-  position: fixed; inset: 0; z-index: 2;
-  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
-  pointer-events: none;
-}
+#cosmos { position:fixed; inset:0; z-index:0; background: radial-gradient(ellipse 80% 60% at 20% 30%,#1a0533 0%,transparent 60%), radial-gradient(ellipse 60% 80% at 80% 70%,#050d2e 0%,transparent 60%), var(--void); }
+#starfield { position:fixed; inset:0; z-index:1; pointer-events:none; }
+.nebula-cloud { position:fixed; border-radius:50%; filter:blur(60px); pointer-events:none; animation:nebula-drift 20s ease-in-out infinite alternate; }
+@keyframes nebula-drift { 0%{transform:translate(0,0) scale(1)} 100%{transform:translate(30px,-20px) scale(1.05)} }
+#scanlines { position:fixed; inset:0; z-index:2; background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px); pointer-events:none; }
 
 /* ── LAYOUT ── */
-#app {
-  position: relative; z-index: 10;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 28px 24px 16px;
-}
+#app { position:relative; z-index:10; height:100vh; display:flex; flex-direction:column; align-items:center; padding:28px 24px 16px; }
 
 /* ── HEADER ── */
-#header {
-  width: 100%; max-width: 760px;
-  margin-bottom: 20px;
-  display: flex; flex-direction: column; align-items: center; gap: 5px;
-}
+#header { width:100%; max-width:760px; margin-bottom:20px; display:flex; flex-direction:column; align-items:center; gap:5px; }
+#logo { font-family:'Orbitron',monospace; font-weight:900; font-size:clamp(1.8rem,4vw,2.8rem); letter-spacing:0.35em; background:linear-gradient(135deg,#fff 0%,#b0d4ff 35%,#d4b0ff 65%,#b0ffe8 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; filter:drop-shadow(0 0 30px rgba(77,201,255,0.5)); animation:logo-pulse 4s ease-in-out infinite; }
+@keyframes logo-pulse { 0%,100%{filter:drop-shadow(0 0 20px rgba(77,201,255,0.4))} 50%{filter:drop-shadow(0 0 45px rgba(176,96,255,0.6))} }
+#tagline { font-family:'Space Mono',monospace; font-size:0.55rem; letter-spacing:0.4em; color:var(--text-dim); text-transform:uppercase; }
 
-#logo {
-  font-family: 'Orbitron', monospace;
-  font-weight: 900;
-  font-size: clamp(1.8rem, 4vw, 2.8rem);
-  letter-spacing: 0.35em;
-  background: linear-gradient(135deg, #ffffff 0%, #b0d4ff 35%, #d4b0ff 65%, #b0ffe8 100%);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-  filter: drop-shadow(0 0 30px rgba(77,201,255,0.5));
-  animation: logo-pulse 4s ease-in-out infinite;
-}
-@keyframes logo-pulse {
-  0%,100% { filter: drop-shadow(0 0 20px rgba(77,201,255,0.4)); }
-  50% { filter: drop-shadow(0 0 45px rgba(176,96,255,0.6)); }
-}
-
-#tagline {
-  font-family: 'Space Mono', monospace;
-  font-size: 0.55rem; letter-spacing: 0.4em; color: var(--text-dim); text-transform: uppercase;
-}
-
-/* ── INPUT PANEL ── */
-.glass-panel {
-  position: relative;
-  background: var(--glass-bg);
-  backdrop-filter: blur(28px) saturate(160%);
-  border: 1px solid var(--glass-border);
-  clip-path: polygon(16px 0%,calc(100% - 16px) 0%,100% 16px,100% calc(100% - 16px),calc(100% - 16px) 100%,16px 100%,0% calc(100% - 16px),0% 16px);
-  box-shadow: 0 0 0 1px rgba(77,201,255,0.05) inset, 0 8px 40px rgba(0,0,0,0.55);
-  overflow: hidden;
-}
-.glass-panel::before {
-  content: ''; position: absolute; top:0; left:14%; right:14%; height:1px;
-  background: linear-gradient(90deg,transparent,var(--glow-blue) 40%,var(--glow-purple) 60%,transparent);
-  opacity: 0.45; z-index: 2; pointer-events: none;
-}
-.corner { position: absolute; width: 13px; height: 13px; border-color: var(--glow-blue); border-style: solid; opacity: 0.65; z-index: 4; pointer-events: none; }
+/* ── GLASS PANEL ── */
+.glass-panel { position:relative; background:var(--glass-bg); backdrop-filter:blur(28px) saturate(160%); border:1px solid var(--glass-border); clip-path:polygon(16px 0%,calc(100% - 16px) 0%,100% 16px,100% calc(100% - 16px),calc(100% - 16px) 100%,16px 100%,0% calc(100% - 16px),0% 16px); box-shadow:0 0 0 1px rgba(77,201,255,0.05) inset,0 8px 40px rgba(0,0,0,0.55); overflow:hidden; }
+.glass-panel::before { content:''; position:absolute; top:0; left:14%; right:14%; height:1px; background:linear-gradient(90deg,transparent,var(--glow-blue) 40%,var(--glow-purple) 60%,transparent); opacity:0.45; z-index:2; pointer-events:none; }
+.corner { position:absolute; width:13px; height:13px; border-color:var(--glow-blue); border-style:solid; opacity:0.65; z-index:4; pointer-events:none; }
 .corner.tl { top:4px; left:4px; border-width:1.5px 0 0 1.5px; }
 .corner.tr { top:4px; right:4px; border-width:1.5px 1.5px 0 0; }
 .corner.bl { bottom:4px; left:4px; border-width:0 0 1.5px 1.5px; }
 .corner.br { bottom:4px; right:4px; border-width:0 1.5px 1.5px 0; }
 
-#input-panel {
-  width: 100%; max-width: 640px;
-  margin-bottom: 12px;
-  padding: 16px 22px;
-}
-#input-row { display: flex; align-items: center; gap: 14px; }
-#task-input {
-  flex: 1; background: transparent; border: none; outline: none;
-  font-family: 'Rajdhani', sans-serif; font-size: 1.1rem; font-weight: 500;
-  color: var(--text-primary); letter-spacing: 0.02em; caret-color: var(--glow-teal);
-}
-#task-input::placeholder { color: var(--text-ghost); font-style: italic; font-weight: 300; }
-#input-hint {
-  font-family: 'Space Mono', monospace; font-size: 0.52rem; color: var(--text-ghost);
-  white-space: nowrap; padding: 3px 10px;
-  border: 1px solid rgba(77,201,255,0.12); background: rgba(77,201,255,0.04);
-  clip-path: polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%); letter-spacing: 0.07em;
-}
+/* ── INPUT ── */
+#input-panel { width:100%; max-width:640px; margin-bottom:12px; padding:16px 22px; }
+#input-row { display:flex; align-items:center; gap:14px; }
+#task-input { flex:1; background:transparent; border:none; outline:none; font-family:'Rajdhani',sans-serif; font-size:1.1rem; font-weight:500; color:var(--text-primary); letter-spacing:0.02em; caret-color:var(--glow-teal); }
+#task-input::placeholder { color:var(--text-ghost); font-style:italic; font-weight:300; }
+#input-hint { font-family:'Space Mono',monospace; font-size:0.52rem; color:var(--text-ghost); white-space:nowrap; padding:3px 10px; border:1px solid rgba(77,201,255,0.12); background:rgba(77,201,255,0.04); clip-path:polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%); letter-spacing:0.07em; }
 
-/* ── SATURN STAGE ── */
-#saturn-stage {
-  flex: 1; width: 100%; display: flex; align-items: center; justify-content: center;
-  position: relative; min-height: 0;
-}
+/* ── VIEW CONTAINER ── */
+#view-container { flex:1; width:100%; display:flex; align-items:stretch; justify-content:center; position:relative; min-height:0; overflow:hidden; }
 
-/* ── SATURN SVG CANVAS ── */
-#saturn-canvas {
-  width: 100%; height: 100%;
-  max-width: 700px; max-height: 500px;
-}
+.view { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; transition:transform 0.5s cubic-bezier(0.77,0,0.175,1), opacity 0.4s ease; will-change:transform,opacity; }
+.view.active   { transform:translateX(0);     opacity:1; pointer-events:auto; }
+.view.offright { transform:translateX(110%);  opacity:0; pointer-events:none; }
+.view.offleft  { transform:translateX(-110%); opacity:0; pointer-events:none; }
+
+/* ── SATURN VIEW ── */
+#saturn-view { flex-direction:column; }
+#saturn-canvas { width:100%; height:100%; max-width:700px; max-height:500px; }
 
 /* ── TASK LABEL OVERLAY ── */
-#task-label-overlay {
-  position: absolute;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-  display: flex; flex-direction: column; align-items: center; gap: 6px;
-  z-index: 20;
-}
+#task-label-overlay { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); pointer-events:none; display:flex; flex-direction:column; align-items:center; gap:6px; z-index:20; }
+#selected-task-box { position:relative; background:rgba(8,6,30,0.82); border:1px solid rgba(176,96,255,0.55); clip-path:polygon(12px 0%,calc(100% - 12px) 0%,100% 12px,100% calc(100% - 12px),calc(100% - 12px) 100%,12px 100%,0% calc(100% - 12px),0% 12px); padding:10px 22px; backdrop-filter:blur(20px); box-shadow:0 0 28px rgba(176,96,255,0.25),0 0 0 1px rgba(176,96,255,0.1) inset; min-width:180px; max-width:320px; text-align:center; opacity:0; transform:scale(0.85); transition:opacity 0.35s cubic-bezier(0.23,1,0.32,1),transform 0.35s cubic-bezier(0.23,1,0.32,1); pointer-events:auto; }
+#selected-task-box.visible { opacity:1; transform:scale(1); }
+#selected-task-box::before { content:''; position:absolute; top:0; left:14%; right:14%; height:1px; background:linear-gradient(90deg,transparent,var(--glow-purple) 40%,var(--glow-blue) 60%,transparent); opacity:0.7; }
+#task-box-label { font-family:'Space Mono',monospace; font-size:0.48rem; letter-spacing:0.3em; color:var(--text-ghost); text-transform:uppercase; margin-bottom:4px; }
+#task-box-text { font-family:'Rajdhani',sans-serif; font-size:1.05rem; font-weight:600; color:var(--text-primary); letter-spacing:0.04em; line-height:1.3; word-break:break-word; }
+#task-box-meta { font-family:'Space Mono',monospace; font-size:0.48rem; color:var(--text-ghost); letter-spacing:0.15em; margin-top:4px; }
+#task-box-edit { background:transparent; border:none; outline:none; border-bottom:1px solid var(--glow-purple); font-family:'Rajdhani',sans-serif; font-size:1.05rem; font-weight:600; color:var(--text-primary); text-align:center; width:100%; caret-color:var(--glow-purple); display:none; }
 
-#selected-task-box {
-  position: relative;
-  background: rgba(8,6,30,0.82);
-  border: 1px solid rgba(176,96,255,0.55);
-  clip-path: polygon(12px 0%,calc(100% - 12px) 0%,100% 12px,100% calc(100% - 12px),calc(100% - 12px) 100%,12px 100%,0% calc(100% - 12px),0% 12px);
-  padding: 10px 22px;
-  backdrop-filter: blur(20px);
-  box-shadow: 0 0 28px rgba(176,96,255,0.25), 0 0 0 1px rgba(176,96,255,0.1) inset;
-  min-width: 180px; max-width: 320px;
-  text-align: center;
-  opacity: 0;
-  transform: scale(0.85);
-  transition: opacity 0.35s cubic-bezier(0.23,1,0.32,1), transform 0.35s cubic-bezier(0.23,1,0.32,1);
-  pointer-events: auto;
-}
-#selected-task-box.visible {
-  opacity: 1; transform: scale(1);
-}
-#selected-task-box::before {
-  content: ''; position: absolute; top: 0; left: 14%; right: 14%; height: 1px;
-  background: linear-gradient(90deg,transparent,var(--glow-purple) 40%,var(--glow-blue) 60%,transparent);
-  opacity: 0.7;
-}
+/* ── VIEW HINT ── */
+.view-badge { font-family:'Space Mono',monospace; font-size:0.46rem; letter-spacing:0.2em; color:rgba(120,160,220,0.25); background:transparent; border:none; padding:4px 0 0; text-align:center; pointer-events:none; display:block; width:100%; }
 
-#task-box-label {
-  font-family: 'Space Mono', monospace;
-  font-size: 0.48rem; letter-spacing: 0.3em; color: var(--text-ghost);
-  text-transform: uppercase; margin-bottom: 4px;
-}
-
-#task-box-text {
-  font-family: 'Rajdhani', sans-serif;
-  font-size: 1.05rem; font-weight: 600; color: var(--text-primary);
-  letter-spacing: 0.04em; line-height: 1.3;
-  word-break: break-word;
-}
-
-#task-box-meta {
-  font-family: 'Space Mono', monospace;
-  font-size: 0.48rem; color: var(--text-ghost); letter-spacing: 0.15em; margin-top: 4px;
-}
-
-/* ── EDIT INPUT INSIDE TASK BOX ── */
-#task-box-edit {
-  background: transparent; border: none; outline: none;
-  border-bottom: 1px solid var(--glow-purple);
-  font-family: 'Rajdhani', sans-serif; font-size: 1.05rem; font-weight: 600;
-  color: var(--text-primary); text-align: center; width: 100%;
-  caret-color: var(--glow-purple); display: none;
-}
-
-/* ── EMPTY STATE ── */
-#empty-hint {
-  position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
-  font-family: 'Space Mono', monospace; font-size: 0.6rem;
-  color: var(--text-ghost); letter-spacing: 0.15em; text-align: center;
-  pointer-events: none; transition: opacity 0.3s ease;
-}
+/* ── LIST VIEW ── */
+#list-view { flex-direction:column; }
+#list-panel { width:100%; max-width:640px; height:100%; display:flex; flex-direction:column; }
+#list-header { display:flex; align-items:center; justify-content:space-between; padding:14px 22px 10px; border-bottom:1px solid rgba(255,255,255,0.06); flex-shrink:0; }
+#list-label { font-family:'Orbitron',monospace; font-size:0.65rem; letter-spacing:0.3em; color:var(--text-dim); text-transform:uppercase; }
+#task-count { font-family:'Space Mono',monospace; font-size:0.65rem; color:var(--glow-teal); letter-spacing:0.1em; }
+#list-scroll { flex:1; overflow-y:auto; overflow-x:hidden; padding:8px 12px; position:relative; scrollbar-width:thin; scrollbar-color:rgba(77,201,255,0.15) transparent; }
+#list-scroll::-webkit-scrollbar { width:3px; }
+#list-scroll::-webkit-scrollbar-thumb { background:rgba(77,201,255,0.2); border-radius:2px; }
+#sel-highlight { position:absolute; left:12px; right:12px; background:rgba(77,201,255,0.07); border:1px solid rgba(77,201,255,0.35); clip-path:polygon(8px 0%,calc(100% - 8px) 0%,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0% calc(100% - 8px),0% 8px); box-shadow:0 0 18px rgba(77,201,255,0.07) inset,0 0 1px rgba(77,201,255,0.55); transition:top 0.17s cubic-bezier(0.23,1,0.32,1),height 0.1s ease,opacity 0.15s ease; opacity:0; pointer-events:none; z-index:0; }
+#sel-highlight::before { content:''; position:absolute; left:0; top:22%; bottom:22%; width:2px; background:var(--glow-blue); box-shadow:0 0 8px var(--glow-blue),0 0 18px var(--glow-blue); border-radius:1px; animation:caret-blink 1.1s step-end infinite; }
+@keyframes caret-blink { 0%,100%{opacity:1} 50%{opacity:0} }
+.task-item { display:flex; align-items:center; gap:13px; padding:12px; margin-bottom:5px; cursor:pointer; position:relative; z-index:1; border:1px solid transparent; transition:opacity 0.2s; animation:task-enter 0.3s cubic-bezier(0.23,1,0.32,1) forwards; }
+@keyframes task-enter { from{opacity:0;transform:translateX(-10px)} to{opacity:1;transform:translateX(0)} }
+.task-item.done .task-text { text-decoration:line-through; color:var(--text-dim); text-decoration-color:var(--glow-teal); }
+.task-check { width:20px; height:20px; clip-path:polygon(50% 0%,93% 25%,93% 75%,50% 100%,7% 75%,7% 25%); border:1.5px solid rgba(120,160,220,0.3); flex-shrink:0; display:flex; align-items:center; justify-content:center; transition:all 0.3s cubic-bezier(0.23,1,0.32,1); }
+.task-check::after { content:'✓'; font-size:0.7rem; color:var(--glow-teal); opacity:0; transform:scale(0.5) rotate(-20deg); transition:all 0.3s cubic-bezier(0.23,1,0.32,1); }
+.task-item.done .task-check { background:rgba(0,255,204,0.15); border-color:var(--glow-teal); box-shadow:0 0 12px rgba(0,255,204,0.4); }
+.task-item.done .task-check::after { opacity:1; transform:scale(1) rotate(0deg); }
+.task-num { font-family:'Space Mono',monospace; font-size:0.6rem; color:var(--text-ghost); min-width:18px; text-align:right; }
+.task-text { flex:1; font-size:1.05rem; font-weight:500; color:var(--text-primary); line-height:1.3; word-break:break-word; }
+.task-priority { width:5px; height:5px; border-radius:50%; flex-shrink:0; }
+.p-high{background:#ff5cf7;box-shadow:0 0 6px #ff5cf7} .p-med{background:#4dc9ff;box-shadow:0 0 6px #4dc9ff} .p-low{background:#b060ff;box-shadow:0 0 6px #b060ff}
+.task-edit-input { flex:1; background:transparent; border:none; border-bottom:1px solid var(--glow-blue); outline:none; font-family:'Rajdhani',sans-serif; font-size:1.05rem; font-weight:500; color:var(--text-primary); caret-color:var(--glow-blue); padding-bottom:2px; }
+#list-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; padding:48px 0; color:var(--text-ghost); }
+#list-empty-icon { font-size:2.5rem; animation:float 4s ease-in-out infinite; }
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+#list-empty p { font-family:'Space Mono',monospace; font-size:0.7rem; letter-spacing:0.15em; text-align:center; line-height:2; }
 
 /* ── SHORTCUTS ── */
-#shortcuts-panel {
-  width: 100%; max-width: 640px;
-  padding: 11px 22px;
-  display: flex; flex-wrap: wrap; gap: 6px 20px; justify-content: center;
-}
-.shortcut { display: flex; align-items: center; gap: 7px; font-size: 0.68rem; color: var(--text-dim); font-family: 'Space Mono', monospace; }
-.key {
-  background: rgba(77,201,255,0.06); border: 1px solid rgba(77,201,255,0.2);
-  border-bottom: 2px solid rgba(77,201,255,0.1); padding: 2px 6px;
-  font-size: 0.5rem; color: rgba(180,220,255,0.8); letter-spacing: 0.05em;
-  font-family: 'Orbitron', monospace; white-space: nowrap;
-  clip-path: polygon(4px 0%,100% 0%,calc(100% - 4px) 100%,0% 100%);
-}
+#shortcuts-panel { width:100%; max-width:640px; padding:11px 22px; display:flex; flex-wrap:wrap; gap:6px 20px; justify-content:center; }
+.shortcut { display:flex; align-items:center; gap:7px; font-size:0.68rem; color:var(--text-dim); font-family:'Space Mono',monospace; }
+.key { background:rgba(77,201,255,0.06); border:1px solid rgba(77,201,255,0.2); border-bottom:2px solid rgba(77,201,255,0.1); padding:2px 6px; font-size:0.5rem; color:rgba(180,220,255,0.8); letter-spacing:0.05em; font-family:'Orbitron',monospace; white-space:nowrap; clip-path:polygon(4px 0%,100% 0%,calc(100% - 4px) 100%,0% 100%); }
 
-/* ── MODE INDICATOR ── */
-#mode-indicator {
-  position: fixed; top: 18px; right: 22px;
-  font-family: 'Orbitron', monospace; font-size: 0.52rem; letter-spacing: 0.2em;
-  padding: 5px 12px; border-radius: 20px;
-  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
-  color: var(--text-dim); z-index: 50; transition: all 0.3s ease;
-}
-#mode-indicator.adding { color: var(--glow-purple); border-color: rgba(176,96,255,0.4); background: rgba(176,96,255,0.06); box-shadow: 0 0 15px rgba(176,96,255,0.2); }
-#mode-indicator.ring { color: var(--glow-blue); border-color: rgba(77,201,255,0.4); background: rgba(77,201,255,0.06); box-shadow: 0 0 15px rgba(77,201,255,0.2); }
-#mode-indicator.editing { color: var(--glow-teal); border-color: rgba(0,255,204,0.4); background: rgba(0,255,204,0.06); box-shadow: 0 0 15px rgba(0,255,204,0.2); }
+/* ── SETTINGS GEAR ── */
+#settings-btn { position:fixed; top:14px; right:16px; width:34px; height:34px; border-radius:50%; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:60; transition:all 0.3s ease; color:var(--text-dim); }
+#settings-btn:hover { border-color:rgba(77,201,255,0.4); background:rgba(77,201,255,0.06); color:var(--glow-blue); box-shadow:0 0 15px rgba(77,201,255,0.2); }
+#settings-btn svg { width:15px; height:15px; transition:transform 0.4s ease; }
+#settings-btn.open svg { transform:rotate(60deg); }
+
+/* Mode indicator */
+#mode-indicator { position:fixed; top:18px; right:58px; font-family:'Orbitron',monospace; font-size:0.52rem; letter-spacing:0.2em; padding:5px 12px; border-radius:20px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); color:var(--text-dim); z-index:50; transition:all 0.3s ease; }
+#mode-indicator.adding { color:var(--glow-purple); border-color:rgba(176,96,255,0.4); background:rgba(176,96,255,0.06); box-shadow:0 0 15px rgba(176,96,255,0.2); }
+#mode-indicator.ring   { color:var(--glow-blue);   border-color:rgba(77,201,255,0.4);  background:rgba(77,201,255,0.06);  box-shadow:0 0 15px rgba(77,201,255,0.2); }
+#mode-indicator.editing{ color:var(--glow-teal);   border-color:rgba(0,255,204,0.4);   background:rgba(0,255,204,0.06);   box-shadow:0 0 15px rgba(0,255,204,0.2); }
+
+/* ── SETTINGS MODAL ── */
+#settings-modal { position:fixed; top:56px; right:12px; width:310px; z-index:55; opacity:0; transform:translateY(-10px) scale(0.97); pointer-events:none; transition:opacity 0.22s cubic-bezier(0.23,1,0.32,1),transform 0.22s cubic-bezier(0.23,1,0.32,1); }
+#settings-modal.open { opacity:1; transform:translateY(0) scale(1); pointer-events:auto; }
+#settings-inner { padding:20px 22px; display:flex; flex-direction:column; gap:16px; }
+.s-title { font-family:'Orbitron',monospace; font-size:0.53rem; letter-spacing:0.28em; color:var(--text-ghost); text-transform:uppercase; margin-bottom:8px; }
+.s-row { display:flex; gap:10px; }
+.s-btn { flex:1; font-family:'Space Mono',monospace; font-size:0.58rem; letter-spacing:0.08em; padding:9px 10px; background:rgba(77,201,255,0.06); border:1px solid rgba(77,201,255,0.22); color:var(--glow-blue); cursor:pointer; clip-path:polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%); transition:all 0.2s; }
+.s-btn:hover { background:rgba(77,201,255,0.14); box-shadow:0 0 12px rgba(77,201,255,0.2); }
+.s-btn.purple { border-color:rgba(176,96,255,0.3); color:var(--glow-purple); background:rgba(176,96,255,0.06); }
+.s-btn.purple:hover { background:rgba(176,96,255,0.14); box-shadow:0 0 12px rgba(176,96,255,0.2); }
+.s-divider { height:1px; background:linear-gradient(90deg,transparent,rgba(77,201,255,0.15) 50%,transparent); }
+.s-github { display:flex; align-items:center; gap:10px; font-family:'Space Mono',monospace; font-size:0.56rem; color:var(--text-dim); text-decoration:none; padding:2px 0; transition:color 0.2s; }
+.s-github:hover { color:var(--glow-blue); }
+.s-github svg { width:14px; height:14px; flex-shrink:0; opacity:0.55; transition:opacity 0.2s; }
+.s-github:hover svg { opacity:1; }
 
 /* ── TOAST ── */
-#toast {
-  position: fixed; bottom: 26px; left: 50%;
-  transform: translateX(-50%) translateY(20px);
-  padding: 9px 20px; background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.12); border-radius: 30px;
-  backdrop-filter: blur(20px); font-family: 'Space Mono', monospace;
-  font-size: 0.62rem; letter-spacing: 0.1em; color: var(--text-dim);
-  opacity: 0; transition: all 0.3s cubic-bezier(0.23,1,0.32,1);
-  z-index: 200; pointer-events: none; white-space: nowrap;
-}
-#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+#toast { position:fixed; bottom:26px; left:50%; transform:translateX(-50%) translateY(20px); padding:9px 20px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); border-radius:30px; backdrop-filter:blur(20px); font-family:'Space Mono',monospace; font-size:0.62rem; letter-spacing:0.1em; color:var(--text-dim); opacity:0; transition:all 0.3s cubic-bezier(0.23,1,0.32,1); z-index:200; pointer-events:none; white-space:nowrap; }
+#toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
 
-/* ── PARTICLES ── */
-.particle {
-  position: fixed; border-radius: 50%; pointer-events: none; z-index: 100;
-  animation: particle-burst 0.85s cubic-bezier(0.23,1,0.32,1) forwards;
-}
-@keyframes particle-burst {
-  0% { opacity: 1; transform: translate(0,0) scale(1); }
-  100% { opacity: 0; transform: translate(var(--tx),var(--ty)) scale(0); }
-}
-
-.orbit-ring-fx {
-  position: fixed; border-radius: 50%; border: 1.5px solid var(--glow-teal);
-  pointer-events: none; z-index: 100; opacity: 0;
-  animation: orbit-expand 0.6s ease-out forwards;
-}
-@keyframes orbit-expand {
-  0% { opacity: 0.8; transform: translate(-50%,-50%) scale(0.2); }
-  100% { opacity: 0; transform: translate(-50%,-50%) scale(3); }
-}
-
-.warp-line {
-  position: fixed; width: 1px; height: 40vh; top: 50%;
-  background: linear-gradient(to bottom, transparent, var(--glow-purple), transparent);
-  pointer-events: none; z-index: 99; transform-origin: center;
-  animation: warp-line 0.4s ease-out forwards;
-}
-@keyframes warp-line {
-  0% { transform: scaleY(0) translateX(var(--x)); opacity: 0.8; }
-  50% { transform: scaleY(1) translateX(var(--x)); opacity: 0.5; }
-  100% { transform: scaleY(0) translateX(var(--x)); opacity: 0; }
-}
-
-/* Task entering ring animation */
-@keyframes task-spawn-to-ring {
-  0% { r: 0; opacity: 0; }
-  40% { r: 14; opacity: 1; }
-  70% { r: 10; opacity: 1; }
-  100% { r: 8; opacity: 1; }
-}
-
+/* ── FX ── */
+.particle { position:fixed; border-radius:50%; pointer-events:none; z-index:100; animation:particle-burst 0.85s cubic-bezier(0.23,1,0.32,1) forwards; }
+@keyframes particle-burst { 0%{opacity:1;transform:translate(0,0) scale(1)} 100%{opacity:0;transform:translate(var(--tx),var(--ty)) scale(0)} }
+.orbit-ring-fx { position:fixed; border-radius:50%; border:1.5px solid var(--glow-teal); pointer-events:none; z-index:100; opacity:0; animation:orbit-expand 0.6s ease-out forwards; }
+@keyframes orbit-expand { 0%{opacity:0.8;transform:translate(-50%,-50%) scale(0.2)} 100%{opacity:0;transform:translate(-50%,-50%) scale(3)} }
+.warp-line { position:fixed; width:1px; height:40vh; top:50%; background:linear-gradient(to bottom,transparent,var(--glow-purple),transparent); pointer-events:none; z-index:99; transform-origin:center; animation:warp-line 0.4s ease-out forwards; }
+@keyframes warp-line { 0%{transform:scaleY(0) translateX(var(--x));opacity:0.8} 50%{transform:scaleY(1) translateX(var(--x));opacity:0.5} 100%{transform:scaleY(0) translateX(var(--x));opacity:0} }
 </style>
 </head>
 <body>
@@ -311,6 +166,39 @@ html, body {
 <canvas id="starfield"></canvas>
 <div id="scanlines"></div>
 <div id="mode-indicator">ORBIT CONTROL</div>
+
+<!-- Settings gear -->
+<button id="settings-btn" onclick="toggleSettings()" title="Settings" aria-label="Settings">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="3"/>
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+  </svg>
+</button>
+
+<!-- Settings modal -->
+<div id="settings-modal" class="glass-panel">
+  <div class="corner tl"></div><div class="corner tr"></div>
+  <div class="corner bl"></div><div class="corner br"></div>
+  <div id="settings-inner">
+    <div>
+      <div class="s-title">Data Management</div>
+      <div class="s-row">
+        <button class="s-btn" onclick="exportTasks()">⬇ Export JSON</button>
+        <button class="s-btn purple" onclick="document.getElementById('import-file').click()">⬆ Import JSON</button>
+      </div>
+      <input type="file" id="import-file" accept=".json" style="display:none" onchange="importTasks(event)"/>
+    </div>
+    <div class="s-divider"></div>
+    <div>
+      <div class="s-title">Project</div>
+      <a class="s-github" href="https://github.com/starship-droid/orbit-task-control" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2z"/></svg>
+        starship-droid/orbit-task-control
+      </a>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <div id="app">
@@ -319,125 +207,108 @@ html, body {
     <div id="tagline">// Personal Task Control — Alpha Station</div>
   </div>
 
-  <!-- Input -->
   <div class="glass-panel" id="input-panel">
     <div class="corner tl"></div><div class="corner tr"></div>
     <div class="corner bl"></div><div class="corner br"></div>
     <div id="input-row">
       <span style="color:var(--glow-purple);font-size:1rem;opacity:0.7;flex-shrink:0">+</span>
       <input id="task-input" type="text" placeholder="New mission directive…" autocomplete="off" spellcheck="false">
-      <div id="input-hint">ENTER · TAB to orbit</div>
+      <div id="input-hint">ENTER · TAB</div>
     </div>
   </div>
 
-  <!-- Saturn Stage -->
-  <div id="saturn-stage">
-    <svg id="saturn-canvas" viewBox="0 0 700 460" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <!-- Saturn body gradient - purple/blue -->
-        <radialGradient id="saturnGrad" cx="42%" cy="38%" r="60%">
-          <stop offset="0%" stop-color="#c8a0ff" stop-opacity="0.9"/>
-          <stop offset="25%" stop-color="#9060e0" stop-opacity="0.85"/>
-          <stop offset="55%" stop-color="#4030a0" stop-opacity="0.8"/>
-          <stop offset="80%" stop-color="#201060" stop-opacity="0.75"/>
-          <stop offset="100%" stop-color="#100830" stop-opacity="0.7"/>
-        </radialGradient>
-        <!-- Saturn atmosphere bands -->
-        <linearGradient id="bandGrad1" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#b080ff" stop-opacity="0.15"/>
-          <stop offset="100%" stop-color="transparent"/>
-        </linearGradient>
-        <!-- Ring gradient for depth -->
-        <linearGradient id="ringFade" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stop-color="rgba(150,140,180,0.9)"/>
-          <stop offset="50%" stop-color="rgba(200,190,220,0.6)"/>
-          <stop offset="100%" stop-color="rgba(150,140,180,0.9)"/>
-        </linearGradient>
-        <!-- Glow filter for tasks on ring -->
-        <filter id="taskGlow" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="3" result="blur"/>
-          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-        </filter>
-        <!-- Softer glow for selected task -->
-        <filter id="selectedGlow" x="-80%" y="-80%" width="260%" height="260%">
-          <feGaussianBlur stdDeviation="6" result="blur"/>
-          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-        </filter>
-        <!-- Saturn shadow/rim -->
-        <radialGradient id="saturnRim" cx="50%" cy="50%" r="50%">
-          <stop offset="70%" stop-color="transparent"/>
-          <stop offset="90%" stop-color="rgba(80,40,160,0.4)"/>
-          <stop offset="100%" stop-color="rgba(40,20,100,0.8)"/>
-        </radialGradient>
-        <!-- Clip for ring behind planet -->
-        <clipPath id="ringBehindClip">
-          <rect x="0" y="0" width="700" height="235"/>
-        </clipPath>
-        <!-- Clip for ring in front of planet -->
-        <clipPath id="ringFrontClip">
-          <rect x="0" y="235" width="700" height="225"/>
-        </clipPath>
-        <!-- Saturn body clip -->
-        <clipPath id="saturnBodyClip">
-          <ellipse cx="350" cy="230" rx="115" ry="108"/>
-        </clipPath>
-        <!-- Clip tasks behind planet -->
-        <clipPath id="taskBehindClip">
-          <rect x="0" y="0" width="700" height="232"/>
-        </clipPath>
-        <clipPath id="taskFrontClip">
-          <rect x="0" y="232" width="700" height="228"/>
-        </clipPath>
-      </defs>
+  <div id="view-container">
 
-      <!-- RING BEHIND PLANET -->
-      <g id="ring-behind" clip-path="url(#ringBehindClip)">
-        <!-- drawn dynamically by JS -->
-      </g>
+    <!-- SATURN VIEW -->
+    <div class="view active" id="saturn-view">
+      <svg id="saturn-canvas" viewBox="0 0 700 460" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <!-- Fully opaque saturn so tasks behind it are hidden -->
+          <radialGradient id="saturnGrad" cx="42%" cy="38%" r="60%">
+            <stop offset="0%"   stop-color="#d0a8ff" stop-opacity="1"/>
+            <stop offset="28%"  stop-color="#8040d8" stop-opacity="1"/>
+            <stop offset="62%"  stop-color="#2e1898" stop-opacity="1"/>
+            <stop offset="100%" stop-color="#0c0828" stop-opacity="1"/>
+          </radialGradient>
+          <radialGradient id="saturnRim" cx="50%" cy="50%" r="50%">
+            <stop offset="65%"  stop-color="transparent"/>
+            <stop offset="86%"  stop-color="rgba(50,25,130,0.7)"/>
+            <stop offset="100%" stop-color="rgba(15,8,60,0.97)"/>
+          </radialGradient>
+          <clipPath id="saturnBodyClip">
+            <ellipse cx="350" cy="230" rx="115" ry="108"/>
+          </clipPath>
+          <!-- Ring clips: top half behind, bottom half in front -->
+          <clipPath id="ringBehindClip"><rect x="0" y="0"   width="700" height="230"/></clipPath>
+          <clipPath id="ringFrontClip"> <rect x="0" y="230" width="700" height="230"/></clipPath>
+          <filter id="taskGlow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="3" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <filter id="selectedGlow" x="-80%" y="-80%" width="260%" height="260%">
+            <feGaussianBlur stdDeviation="6" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
 
-      <!-- TASKS BEHIND PLANET - no clip, always fully visible -->
-      <g id="tasks-behind">
-      </g>
+        <!-- 1. Ring behind (top half) -->
+        <g id="ring-behind" clip-path="url(#ringBehindClip)"></g>
+        <!-- 2. Tasks behind saturn (very dim, drawn before the opaque body) -->
+        <g id="tasks-behind"></g>
+        <!-- 3. Saturn body — fully opaque, covers tasks-behind -->
+        <ellipse cx="350" cy="230" rx="115" ry="108" fill="url(#saturnGrad)"/>
+        <ellipse cx="350" cy="208" rx="108" ry="17" fill="rgba(190,130,255,0.10)" clip-path="url(#saturnBodyClip)"/>
+        <ellipse cx="350" cy="228" rx="112" ry="13" fill="rgba(100,60,200,0.12)"  clip-path="url(#saturnBodyClip)"/>
+        <ellipse cx="350" cy="248" rx="108" ry="11" fill="rgba(140,80,255,0.07)"  clip-path="url(#saturnBodyClip)"/>
+        <ellipse cx="350" cy="230" rx="115" ry="108" fill="url(#saturnRim)"/>
+        <ellipse cx="322" cy="203" rx="26" ry="18" fill="rgba(230,210,255,0.12)"/>
+        <ellipse cx="313" cy="196" rx="10" ry="7"  fill="rgba(255,255,255,0.08)"/>
+        <!-- 4. Ring front (bottom half) -->
+        <g id="ring-front" clip-path="url(#ringFrontClip)"></g>
+        <!-- 5. Tasks in front (full brightness) -->
+        <g id="tasks-front"></g>
 
-      <!-- SATURN BODY -->
-      <ellipse id="saturn-body" cx="350" cy="230" rx="115" ry="108" fill="url(#saturnGrad)"/>
-      <!-- Atmosphere bands -->
-      <ellipse cx="350" cy="210" rx="108" ry="20" fill="rgba(160,100,255,0.07)" clip-path="url(#saturnBodyClip)"/>
-      <ellipse cx="350" cy="230" rx="112" ry="16" fill="rgba(80,60,200,0.08)" clip-path="url(#saturnBodyClip)"/>
-      <ellipse cx="350" cy="250" rx="108" ry="14" fill="rgba(120,80,255,0.06)" clip-path="url(#saturnBodyClip)"/>
-      <!-- Rim light -->
-      <ellipse cx="350" cy="230" rx="115" ry="108" fill="url(#saturnRim)"/>
-      <!-- Specular highlight -->
-      <ellipse cx="325" cy="205" rx="28" ry="20" fill="rgba(220,200,255,0.12)"/>
-      <ellipse cx="316" cy="198" rx="12" ry="8" fill="rgba(255,255,255,0.08)"/>
+        <g id="empty-svg-state">
+          <text x="350" y="222" text-anchor="middle" font-family="Space Mono,monospace" font-size="10" fill="rgba(120,100,180,0.5)" letter-spacing="2">NO MISSIONS</text>
+          <text x="350" y="240" text-anchor="middle" font-family="Space Mono,monospace" font-size="9"  fill="rgba(100,80,160,0.4)"  letter-spacing="1">TYPE ABOVE · ENTER</text>
+        </g>
+      </svg>
 
-      <!-- RING IN FRONT OF PLANET -->
-      <g id="ring-front" clip-path="url(#ringFrontClip)">
-        <!-- drawn dynamically by JS -->
-      </g>
+      <div id="task-label-overlay">
+        <div id="selected-task-box">
+          <div class="corner tl"></div><div class="corner tr"></div>
+          <div class="corner bl"></div><div class="corner br"></div>
+          <div id="task-box-label">ACTIVE MISSION</div>
+          <div id="task-box-text"></div>
+          <input id="task-box-edit" type="text" autocomplete="off" spellcheck="false"/>
+          <div id="task-box-meta"></div>
+        </div>
+      </div>
 
-      <!-- TASKS IN FRONT OF PLANET - no clip, always fully visible -->
-      <g id="tasks-front">
-      </g>
+      <div class="view-badge">SHIFT+TAB → LIST VIEW</div>
+    </div>
 
-      <!-- Empty state text inside saturn area -->
-      <g id="empty-svg-state">
-        <text x="350" y="222" text-anchor="middle" font-family="Space Mono, monospace" font-size="10" fill="rgba(120,100,180,0.5)" letter-spacing="2">NO MISSIONS</text>
-        <text x="350" y="240" text-anchor="middle" font-family="Space Mono, monospace" font-size="9" fill="rgba(100,80,160,0.4)" letter-spacing="1">TYPE ABOVE · ENTER</text>
-      </g>
-    </svg>
-
-    <!-- Task label overlay (shows selected task name) -->
-    <div id="task-label-overlay">
-      <div id="selected-task-box">
+    <!-- LIST VIEW -->
+    <div class="view offright" id="list-view">
+      <div class="glass-panel" id="list-panel">
         <div class="corner tl"></div><div class="corner tr"></div>
         <div class="corner bl"></div><div class="corner br"></div>
-        <div id="task-box-label">ACTIVE MISSION</div>
-        <div id="task-box-text"></div>
-        <input id="task-box-edit" type="text" autocomplete="off" spellcheck="false"/>
-        <div id="task-box-meta"></div>
+        <div id="list-header">
+          <div id="list-label">Active Missions</div>
+          <div id="task-count">0 / 0 done</div>
+        </div>
+        <div id="list-scroll">
+          <div id="sel-highlight"></div>
+          <div id="list-empty">
+            <div id="list-empty-icon">🛸</div>
+            <p>No missions logged.<br>TYPE a task above and press ENTER</p>
+          </div>
+          <div id="task-list"></div>
+        </div>
+        <div class="view-badge" style="padding:8px 0;">SHIFT+TAB → SATURN VIEW</div>
       </div>
     </div>
+
   </div>
 
   <!-- Shortcuts -->
@@ -445,542 +316,406 @@ html, body {
     <div class="corner tl"></div><div class="corner tr"></div>
     <div class="corner bl"></div><div class="corner br"></div>
     <div class="shortcut"><span class="key">TAB</span> Switch focus</div>
-    <div class="shortcut"><span class="key">↑ ↓ ← →</span> Rotate ring</div>
+    <div class="shortcut"><span class="key">↑↓←→</span> Navigate</div>
     <div class="shortcut"><span class="key">Space</span> Complete</div>
     <div class="shortcut"><span class="key">E</span> Edit</div>
     <div class="shortcut"><span class="key">Del</span> Delete</div>
-    <div class="shortcut"><span class="key">N</span> New mission</div>
-    <div class="shortcut" style="cursor:pointer" onclick="exportTasks()" title="Export tasks as JSON file"><span class="key">⬇</span> Export</div>
-    <div class="shortcut" style="cursor:pointer" onclick="document.getElementById('import-file').click()" title="Import tasks from JSON file"><span class="key">⬆</span> Import</div>
-    <input type="file" id="import-file" accept=".json" style="display:none" onchange="importTasks(event)"/>
+    <div class="shortcut"><span class="key">N</span> New</div>
+    <div class="shortcut"><span class="key">⇧TAB</span> Toggle view</div>
   </div>
 </div>
 
 <script>
 // ─── STARS ───────────────────────────────────────────────────────────────────
-(function() {
-  const canvas = document.getElementById('starfield');
-  const ctx = canvas.getContext('2d');
-  function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-  resize();
-  window.addEventListener('resize', resize);
-  const stars = Array.from({length: 200}, () => ({
-    x: Math.random(), y: Math.random(),
-    r: Math.random() * 1.3 + 0.2,
-    op: Math.random() * 0.7 + 0.1,
-    speed: Math.random() * 0.012 + 0.004,
-    phase: Math.random() * Math.PI * 2
-  }));
-  const shoots = [];
-  function maybeShoot() {
-    if (Math.random() < 0.3) shoots.push({
-      x: Math.random() * canvas.width, y: Math.random() * canvas.height * 0.5,
-      vx: (Math.random() * 4 + 3) * (Math.random() < 0.5 ? 1 : -1),
-      vy: Math.random() * 2 + 1, op: 0.9
-    });
-    setTimeout(maybeShoot, Math.random() * 4000 + 2000);
-  }
+(function(){
+  const cv=document.getElementById('starfield'),ctx=cv.getContext('2d');
+  function resize(){cv.width=innerWidth;cv.height=innerHeight;} resize();
+  window.addEventListener('resize',resize);
+  const stars=Array.from({length:200},()=>({x:Math.random(),y:Math.random(),r:Math.random()*1.3+0.2,op:Math.random()*0.7+0.1,speed:Math.random()*0.012+0.004,phase:Math.random()*Math.PI*2}));
+  const shoots=[];
+  function maybeShoot(){if(Math.random()<0.3)shoots.push({x:Math.random()*cv.width,y:Math.random()*cv.height*0.5,vx:(Math.random()*4+3)*(Math.random()<0.5?1:-1),vy:Math.random()*2+1,op:0.9});setTimeout(maybeShoot,Math.random()*4000+2000);}
   maybeShoot();
-  let t = 0;
-  function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height); t += 0.016;
-    stars.forEach(s => {
-      ctx.beginPath();
-      ctx.arc(s.x * canvas.width, s.y * canvas.height, s.r, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(255,255,255,${s.op * (0.5 + 0.5 * Math.sin(t * s.speed * 60 + s.phase))})`;
-      ctx.fill();
-    });
-    shoots.forEach((s, i) => {
-      s.x += s.vx; s.y += s.vy; s.op -= 0.025;
-      ctx.beginPath(); ctx.moveTo(s.x, s.y);
-      ctx.lineTo(s.x - s.vx * 10, s.y - s.vy * 10);
-      const g = ctx.createLinearGradient(s.x, s.y, s.x - s.vx * 10, s.y - s.vy * 10);
-      g.addColorStop(0, `rgba(180,210,255,${s.op})`); g.addColorStop(1, 'transparent');
-      ctx.strokeStyle = g; ctx.lineWidth = 1.5; ctx.stroke();
-      if (s.op <= 0) shoots.splice(i, 1);
-    });
-    requestAnimationFrame(draw);
-  }
-  draw();
+  let t=0;
+  function draw(){ctx.clearRect(0,0,cv.width,cv.height);t+=0.016;
+    stars.forEach(s=>{ctx.beginPath();ctx.arc(s.x*cv.width,s.y*cv.height,s.r,0,Math.PI*2);ctx.fillStyle=`rgba(255,255,255,${s.op*(0.5+0.5*Math.sin(t*s.speed*60+s.phase))})`;ctx.fill();});
+    shoots.forEach((s,i)=>{s.x+=s.vx;s.y+=s.vy;s.op-=0.025;ctx.beginPath();ctx.moveTo(s.x,s.y);ctx.lineTo(s.x-s.vx*10,s.y-s.vy*10);const g=ctx.createLinearGradient(s.x,s.y,s.x-s.vx*10,s.y-s.vy*10);g.addColorStop(0,`rgba(180,210,255,${s.op})`);g.addColorStop(1,'transparent');ctx.strokeStyle=g;ctx.lineWidth=1.5;ctx.stroke();if(s.op<=0)shoots.splice(i,1);});
+    requestAnimationFrame(draw);}draw();
 })();
 
 // ─── NEBULAS ─────────────────────────────────────────────────────────────────
-(function() {
-  [
-    { color: 'rgba(80,0,180,0.18)', size: 500, top: '10%', left: '5%', delay: '0s' },
-    { color: 'rgba(0,60,180,0.14)', size: 400, top: '60%', left: '70%', delay: '5s' },
-    { color: 'rgba(140,0,180,0.1)', size: 600, top: '40%', left: '40%', delay: '10s' },
-  ].forEach(c => {
-    const el = document.createElement('div');
-    el.className = 'nebula-cloud';
-    el.style.cssText = `background:radial-gradient(circle,${c.color},transparent 70%);width:${c.size}px;height:${c.size}px;top:${c.top};left:${c.left};animation-delay:${c.delay};`;
-    document.getElementById('cosmos').appendChild(el);
-  });
+(function(){
+  [{color:'rgba(80,0,180,0.18)',size:500,top:'10%',left:'5%',delay:'0s'},{color:'rgba(0,60,180,0.14)',size:400,top:'60%',left:'70%',delay:'5s'},{color:'rgba(140,0,180,0.1)',size:600,top:'40%',left:'40%',delay:'10s'}].forEach(c=>{
+    const el=document.createElement('div');el.className='nebula-cloud';
+    el.style.cssText=`background:radial-gradient(circle,${c.color},transparent 70%);width:${c.size}px;height:${c.size}px;top:${c.top};left:${c.left};animation-delay:${c.delay};`;
+    document.getElementById('cosmos').appendChild(el);});
 })();
 
 // ─── STATE ───────────────────────────────────────────────────────────────────
-let tasks = JSON.parse(localStorage.getItem('orbit-tasks') || '[]');
-let selectedIdx = -1;
-// Modes: 'normal' | 'adding' | 'ring' | 'editing'
-// 'adding'  = input field has focus
-// 'ring'    = ring has focus, no real DOM element focused
-// 'normal'  = nothing focused
-// 'editing' = task-box-edit has focus
-let mode = 'normal';
+let tasks=JSON.parse(localStorage.getItem('orbit-tasks')||'[]');
+let selectedIdx=-1;
+let mode='normal';
+let currentView='saturn';
+const COLORS=['p-high','p-med','p-low'];
+function save(){localStorage.setItem('orbit-tasks',JSON.stringify(tasks));}
 
-function save() { localStorage.setItem('orbit-tasks', JSON.stringify(tasks)); }
-
-const TASK_COLORS = [
-  { fill: '#b060ff', glow: 'rgba(176,96,255,0.8)' },
-  { fill: '#4dc9ff', glow: 'rgba(77,201,255,0.8)' },
-  { fill: '#00ffcc', glow: 'rgba(0,255,204,0.8)' },
-  { fill: '#ff9d3d', glow: 'rgba(255,157,61,0.8)' },
-  { fill: '#ff5cf7', glow: 'rgba(255,92,247,0.8)' },
-  { fill: '#7df9ff', glow: 'rgba(125,249,255,0.8)' },
+const TASK_COLORS=[
+  {fill:'#b060ff',glow:'rgba(176,96,255,0.8)'},{fill:'#4dc9ff',glow:'rgba(77,201,255,0.8)'},
+  {fill:'#00ffcc',glow:'rgba(0,255,204,0.8)'}, {fill:'#ff9d3d',glow:'rgba(255,157,61,0.8)'},
+  {fill:'#ff5cf7',glow:'rgba(255,92,247,0.8)'},{fill:'#7df9ff',glow:'rgba(125,249,255,0.8)'},
 ];
 
-// ─── SATURN RING ENGINE ───────────────────────────────────────────────────────
-const CX = 350, CY = 230;
-const RING_RX = 210, RING_RY = 52;
-const RING_TILT = -0.18;
-const RING_PARTICLES = 80;
-let ringRotation = 0;
-let newTaskAnimating = null;
-
-function ellipsePoint(angle) {
-  const x = CX + RING_RX * Math.cos(angle);
-  const y = CY + RING_RY * Math.sin(angle);
-  const dx = x - CX, dy = y - CY;
-  return {
-    x: CX + dx * Math.cos(RING_TILT) - dy * Math.sin(RING_TILT),
-    y: CY + dx * Math.sin(RING_TILT) + dy * Math.cos(RING_TILT)
-  };
-}
-
-// "Behind" = top half of the ellipse in screen space (sin < 0 after tilt = above centre)
-// We use the raw angle's sin to determine layer order for RING PARTICLES only
-function isBehindRing(angle) {
-  const norm = ((angle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
-  return norm > Math.PI; // angles π..2π trace the top arc
-}
-
-const SELECTED_ANGLE = Math.PI / 2;
-
-function getRotationForSelected(idx) {
-  if (tasks.length === 0) return 0;
-  return SELECTED_ANGLE - (idx / tasks.length) * Math.PI * 2;
-}
-
-function drawRing(rot) {
-  const behind = document.getElementById('ring-behind');
-  const front  = document.getElementById('ring-front');
-  behind.innerHTML = '';
-  front.innerHTML  = '';
-
-  // Three concentric ellipse outlines
-  [
-    { scale: 1.0,  opacity: 0.55, sw: 1.2 },
-    { scale: 0.88, opacity: 0.35, sw: 0.8 },
-    { scale: 1.12, opacity: 0.25, sw: 0.6 },
-  ].forEach(r => {
-    const pts = [];
-    for (let a = 0; a <= Math.PI * 2; a += 0.05) {
-      const px = CX + RING_RX * r.scale * Math.cos(a);
-      const py = CY + RING_RY * r.scale * Math.sin(a);
-      const dx = px - CX, dy = py - CY;
-      pts.push([CX + dx * Math.cos(RING_TILT) - dy * Math.sin(RING_TILT),
-                CY + dx * Math.sin(RING_TILT) + dy * Math.cos(RING_TILT)]);
-    }
-    const d = pts.map((p,i) => (i===0?`M${p[0]},${p[1]}`:`L${p[0]},${p[1]}`)).join(' ')+'Z';
-    const mkPath = (stroke, sw) => {
-      const el = document.createElementNS('http://www.w3.org/2000/svg','path');
-      el.setAttribute('d', d); el.setAttribute('fill','none');
-      el.setAttribute('stroke', stroke); el.setAttribute('stroke-width', sw);
-      return el;
-    };
-    behind.appendChild(mkPath(`rgba(160,150,200,${r.opacity*0.6})`, r.sw));
-    front.appendChild(mkPath(`rgba(200,190,230,${r.opacity})`, r.sw));
-  });
-
-  // Dust particles — behind/front split only for the ring dust (not tasks)
-  for (let i = 0; i < RING_PARTICLES; i++) {
-    const angle = (i / RING_PARTICLES) * Math.PI * 2 + rot;
-    const rv = Math.sin(i * 7.3) * 0.18 + Math.cos(i * 3.1) * 0.08;
-    const px = CX + RING_RX * (1+rv) * Math.cos(angle);
-    const py = CY + RING_RY * (1+rv*0.4) * Math.sin(angle);
-    const dx = px - CX, dy = py - CY;
-    const fx = CX + dx * Math.cos(RING_TILT) - dy * Math.sin(RING_TILT);
-    const fy = CY + dx * Math.sin(RING_TILT) + dy * Math.cos(RING_TILT);
-    const sz = i%5===0 ? 2.8 : i%3===0 ? 1.8 : 1.0;
-    const col = i%5===0 ? 'rgba(200,190,220,0.7)' : i%3===0 ? 'rgba(170,160,200,0.5)' : 'rgba(140,130,170,0.35)';
-    const isBehind = isBehindRing(angle);
-    const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
-    c.setAttribute('cx', fx); c.setAttribute('cy', fy); c.setAttribute('r', sz);
-    c.setAttribute('fill', col); c.setAttribute('opacity', isBehind ? 0.45 : 1.0);
-    (isBehind ? behind : front).appendChild(c);
+// ─── VIEW TOGGLE ─────────────────────────────────────────────────────────────
+function toggleView(){
+  const sv=document.getElementById('saturn-view'), lv=document.getElementById('list-view');
+  if(currentView==='saturn'){
+    sv.className='view offleft'; lv.className='view active';
+    currentView='list'; renderList();
+  } else {
+    sv.className='view active'; lv.className='view offright';
+    currentView='saturn';
   }
 }
 
-function drawTasks(rot) {
-  // ALL tasks go into tasks-front with no clipping — always fully visible with glow
-  const el = document.getElementById('tasks-front');
-  const elB = document.getElementById('tasks-behind');
-  el.innerHTML = '';
-  elB.innerHTML = '';
+// ─── SETTINGS ────────────────────────────────────────────────────────────────
+let settingsOpen=false;
+function toggleSettings(){
+  settingsOpen=!settingsOpen;
+  document.getElementById('settings-modal').classList.toggle('open',settingsOpen);
+  document.getElementById('settings-btn').classList.toggle('open',settingsOpen);
+}
+document.addEventListener('click',e=>{
+  if(!settingsOpen) return;
+  if(!document.getElementById('settings-modal').contains(e.target)&&!document.getElementById('settings-btn').contains(e.target)) toggleSettings();
+});
 
-  tasks.forEach((task, i) => {
-    const angle = (i / tasks.length) * Math.PI * 2 + rot;
-    const pt = ellipsePoint(angle);
-    const col = TASK_COLORS[i % TASK_COLORS.length];
-    const isSel = (i === selectedIdx) && mode === 'ring';
-    const r = isSel ? 11 : (task.done ? 6 : 8);
+// ─── SATURN ENGINE ───────────────────────────────────────────────────────────
+const CX=350,CY=230,RING_RX=210,RING_RY=52,RING_TILT=-0.18,RING_PARTICLES=80;
+let ringRotation=0, newTaskAnimating=null;
 
-    const mk = (tag, attrs) => {
-      const e = document.createElementNS('http://www.w3.org/2000/svg', tag);
-      Object.entries(attrs).forEach(([k,v]) => e.setAttribute(k,v));
-      return e;
-    };
+function ellipsePoint(angle){
+  const x=CX+RING_RX*Math.cos(angle),y=CY+RING_RY*Math.sin(angle);
+  const dx=x-CX,dy=y-CY;
+  return {x:CX+dx*Math.cos(RING_TILT)-dy*Math.sin(RING_TILT), y:CY+dx*Math.sin(RING_TILT)+dy*Math.cos(RING_TILT)};
+}
 
-    el.appendChild(mk('circle', { cx:pt.x, cy:pt.y, r:r+6,
-      fill: col.glow.replace('0.8','0.18'), filter:'url(#taskGlow)' }));
-    el.appendChild(mk('circle', { cx:pt.x, cy:pt.y, r,
-      fill: task.done ? 'rgba(0,255,204,0.3)' : col.fill,
-      ...(isSel ? { filter:'url(#selectedGlow)', stroke:'rgba(255,255,255,0.6)', 'stroke-width':'1.5' } : {}),
-      ...(task.done ? { stroke:'#00ffcc', 'stroke-width':'1.5' } : {}) }));
+const SELECTED_ANGLE=Math.PI/2;
+function getRotationForSelected(idx){return tasks.length===0?0:SELECTED_ANGLE-(idx/tasks.length)*Math.PI*2;}
 
-    if (task.done) {
-      const ck = mk('text', { x:pt.x, y:pt.y+3, 'text-anchor':'middle', 'font-size':'8', fill:'#00ffcc' });
-      ck.textContent = '✓';
-      el.appendChild(ck);
+function drawRing(rot){
+  const behind=document.getElementById('ring-behind'), front=document.getElementById('ring-front');
+  behind.innerHTML=''; front.innerHTML='';
+
+  // Ellipse outlines — each drawn in both groups; clipPaths trim them to correct halves
+  [{scale:1.0,op:0.55,sw:1.2},{scale:0.88,op:0.35,sw:0.8},{scale:1.12,op:0.25,sw:0.6}].forEach(r=>{
+    const pts=[];
+    for(let a=0;a<=Math.PI*2;a+=0.05){
+      const px=CX+RING_RX*r.scale*Math.cos(a),py=CY+RING_RY*r.scale*Math.sin(a);
+      const dx=px-CX,dy=py-CY;
+      pts.push([CX+dx*Math.cos(RING_TILT)-dy*Math.sin(RING_TILT),CY+dx*Math.sin(RING_TILT)+dy*Math.cos(RING_TILT)]);
     }
+    const d=pts.map((p,i)=>(i===0?`M${p[0]},${p[1]}`:`L${p[0]},${p[1]}`)).join(' ')+'Z';
+    const mk=(col,sw)=>{const e=document.createElementNS('http://www.w3.org/2000/svg','path');e.setAttribute('d',d);e.setAttribute('fill','none');e.setAttribute('stroke',col);e.setAttribute('stroke-width',sw);return e;};
+    behind.appendChild(mk(`rgba(160,150,200,${r.op*0.6})`,r.sw));
+    front.appendChild(mk(`rgba(200,190,230,${r.op})`,r.sw));
   });
 
-  // Spawn animation
-  if (newTaskAnimating) {
-    const { angle, progress, color } = newTaskAnimating;
-    const pt = ellipsePoint(angle);
-    const r = progress < 0.4 ? (progress/0.4)*14 : progress < 0.7 ? 14-((progress-0.4)/0.3)*6 : 8;
-    const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
-    c.setAttribute('cx', pt.x); c.setAttribute('cy', pt.y); c.setAttribute('r', r);
-    c.setAttribute('fill', color.fill); c.setAttribute('opacity', Math.min(1, progress*3));
-    el.appendChild(c);
+  // Dust particles — KEY FIX: add each particle to BOTH groups.
+  // The clipPaths on the groups handle which half is visible.
+  // This means no particle ever disappears at the y=230 boundary.
+  for(let i=0;i<RING_PARTICLES;i++){
+    const angle=(i/RING_PARTICLES)*Math.PI*2+rot;
+    const rv=Math.sin(i*7.3)*0.18+Math.cos(i*3.1)*0.08;
+    const px=CX+RING_RX*(1+rv)*Math.cos(angle),py=CY+RING_RY*(1+rv*0.4)*Math.sin(angle);
+    const dx=px-CX,dy=py-CY;
+    const fx=CX+dx*Math.cos(RING_TILT)-dy*Math.sin(RING_TILT);
+    const fy=CY+dx*Math.sin(RING_TILT)+dy*Math.cos(RING_TILT);
+    const sz=i%5===0?2.8:i%3===0?1.8:1.0;
+    const col=i%5===0?'rgba(200,190,220,0.7)':i%3===0?'rgba(170,160,200,0.5)':'rgba(140,130,170,0.35)';
+    const mkC=(op)=>{const c=document.createElementNS('http://www.w3.org/2000/svg','circle');c.setAttribute('cx',fx);c.setAttribute('cy',fy);c.setAttribute('r',sz);c.setAttribute('fill',col);c.setAttribute('opacity',op);return c;};
+    // Add to BOTH — clip handles visibility, no gap at boundary
+    behind.appendChild(mkC(0.4));  // dimmer in behind (top) group
+    front.appendChild(mkC(1.0));   // full brightness in front (bottom) group
+  }
+}
+
+function drawTasks(rot){
+  const front=document.getElementById('tasks-front'),beh=document.getElementById('tasks-behind');
+  front.innerHTML=''; beh.innerHTML='';
+  if(!tasks.length) return;
+  tasks.forEach((task,i)=>{
+    const angle=(i/tasks.length)*Math.PI*2+rot;
+    const pt=ellipsePoint(angle);
+    const col=TASK_COLORS[i%TASK_COLORS.length];
+    const isSel=(i===selectedIdx)&&mode==='ring';
+    const r=isSel?11:(task.done?6:8);
+    // Tasks above the planet centre y are "behind" saturn (drawn before opaque body)
+    const isBehind=pt.y<CY;
+    const target=isBehind?beh:front;
+    const opacity=isBehind?0.18:1.0; // very dim when behind opaque saturn
+    const mk=(tag,attrs)=>{const e=document.createElementNS('http://www.w3.org/2000/svg',tag);Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v));return e;};
+    target.appendChild(mk('circle',{cx:pt.x,cy:pt.y,r:r+6,fill:col.glow.replace('0.8','0.18'),filter:'url(#taskGlow)',opacity}));
+    target.appendChild(mk('circle',{cx:pt.x,cy:pt.y,r,fill:task.done?'rgba(0,255,204,0.3)':col.fill,opacity,
+      ...(isSel?{filter:'url(#selectedGlow)',stroke:'rgba(255,255,255,0.6)','stroke-width':'1.5'}:{}),
+      ...(task.done?{stroke:'#00ffcc','stroke-width':'1.5'}:{})}));
+    if(task.done){const ck=mk('text',{x:pt.x,y:pt.y+3,'text-anchor':'middle','font-size':'8',fill:'#00ffcc',opacity});ck.textContent='✓';target.appendChild(ck);}
+  });
+  if(newTaskAnimating){
+    const {angle,progress,color}=newTaskAnimating;
+    const pt=ellipsePoint(angle);
+    const r=progress<0.4?(progress/0.4)*14:progress<0.7?14-((progress-0.4)/0.3)*6:8;
+    const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('cx',pt.x);c.setAttribute('cy',pt.y);c.setAttribute('r',r);c.setAttribute('fill',color.fill);c.setAttribute('opacity',Math.min(1,progress*3));
+    front.appendChild(c);
   }
 }
 
 // ─── ANIMATION LOOP ───────────────────────────────────────────────────────────
-let lastTime = 0;
-const BASE_SPEED = 0.0004;
-
-function animLoop(ts) {
-  const dt = ts - lastTime; lastTime = ts;
-  ringRotation += BASE_SPEED * dt;
-
-  if (mode === 'ring' && tasks.length > 0) {
-    const target = getRotationForSelected(selectedIdx);
-    let diff = target - (ringRotation % (Math.PI*2));
-    while (diff >  Math.PI) diff -= Math.PI*2;
-    while (diff < -Math.PI) diff += Math.PI*2;
-    ringRotation += diff * 0.08;
+let lastTime=0;
+function animLoop(ts){
+  const dt=ts-lastTime; lastTime=ts;
+  ringRotation+=0.0004*dt;
+  if(mode==='ring'&&tasks.length>0){
+    const target=getRotationForSelected(selectedIdx);
+    let diff=target-(ringRotation%(Math.PI*2));
+    while(diff>Math.PI)diff-=Math.PI*2; while(diff<-Math.PI)diff+=Math.PI*2;
+    ringRotation+=diff*0.08;
   }
-
-  if (newTaskAnimating) {
-    newTaskAnimating.progress += dt / 700;
-    if (newTaskAnimating.progress >= 1) newTaskAnimating = null;
-  }
-
-  const emptyState = document.getElementById('empty-svg-state');
-  if (emptyState) emptyState.style.display = tasks.length === 0 ? 'block' : 'none';
-
-  drawRing(ringRotation);
-  drawTasks(ringRotation);
+  if(newTaskAnimating){newTaskAnimating.progress+=dt/700;if(newTaskAnimating.progress>=1)newTaskAnimating=null;}
+  const es=document.getElementById('empty-svg-state');
+  if(es) es.style.display=tasks.length===0?'block':'none';
+  if(currentView==='saturn'){drawRing(ringRotation);drawTasks(ringRotation);}
   updateTaskBox();
   requestAnimationFrame(animLoop);
 }
 requestAnimationFrame(animLoop);
 
 // ─── TASK BOX ────────────────────────────────────────────────────────────────
-function updateTaskBox() {
-  const box    = document.getElementById('selected-task-box');
-  const textEl = document.getElementById('task-box-text');
-  const metaEl = document.getElementById('task-box-meta');
-  const editEl = document.getElementById('task-box-edit');
-  const lblEl  = document.getElementById('task-box-label');
-
-  if ((mode === 'ring' || mode === 'editing') && selectedIdx >= 0 && selectedIdx < tasks.length) {
-    const task = tasks[selectedIdx];
-    box.classList.add('visible');
-    if (task.editing) {
-      textEl.style.display = 'none'; editEl.style.display = 'block';
-      lblEl.textContent = 'EDIT MISSION';
-    } else {
-      textEl.style.display = 'block'; editEl.style.display = 'none';
-      textEl.textContent = task.text;
-      const done = tasks.filter(t => t.done).length;
-      metaEl.textContent = `MISSION ${selectedIdx+1} / ${tasks.length} · ${done} COMPLETE`;
-      lblEl.textContent = task.done ? 'MISSION COMPLETE' : 'ACTIVE MISSION';
-      const col = TASK_COLORS[selectedIdx % TASK_COLORS.length];
-      box.style.borderColor = col.fill + '99';
-      box.style.boxShadow = `0 0 28px ${col.glow.replace('0.8','0.2')}, 0 0 0 1px ${col.fill}22 inset`;
+function updateTaskBox(){
+  const box=document.getElementById('selected-task-box');
+  const textEl=document.getElementById('task-box-text'),metaEl=document.getElementById('task-box-meta');
+  const editEl=document.getElementById('task-box-edit'),lblEl=document.getElementById('task-box-label');
+  if((mode==='ring'||mode==='editing')&&selectedIdx>=0&&selectedIdx<tasks.length){
+    const task=tasks[selectedIdx]; box.classList.add('visible');
+    if(task.editing){textEl.style.display='none';editEl.style.display='block';lblEl.textContent='EDIT MISSION';}
+    else{
+      textEl.style.display='block';editEl.style.display='none';textEl.textContent=task.text;
+      const done=tasks.filter(t=>t.done).length;
+      metaEl.textContent=`MISSION ${selectedIdx+1} / ${tasks.length} · ${done} COMPLETE`;
+      lblEl.textContent=task.done?'MISSION COMPLETE':'ACTIVE MISSION';
+      const col=TASK_COLORS[selectedIdx%TASK_COLORS.length];
+      box.style.borderColor=col.fill+'99';
+      box.style.boxShadow=`0 0 28px ${col.glow.replace('0.8','0.2')},0 0 0 1px ${col.fill}22 inset`;
     }
-    textEl.style.textDecoration = task.done ? 'line-through' : 'none';
-    textEl.style.color = task.done ? 'rgba(0,255,204,0.7)' : '';
-  } else {
-    box.classList.remove('visible');
-  }
+    textEl.style.textDecoration=task.done?'line-through':'none';
+    textEl.style.color=task.done?'rgba(0,255,204,0.7)':'';
+  } else box.classList.remove('visible');
+}
+
+// ─── LIST RENDER ─────────────────────────────────────────────────────────────
+function renderList(){
+  const list=document.getElementById('task-list'),empty=document.getElementById('list-empty'),count=document.getElementById('task-count');
+  const done=tasks.filter(t=>t.done).length;
+  count.textContent=`${done} / ${tasks.length} done`;
+  empty.style.display=tasks.length===0?'flex':'none';
+  list.innerHTML='';
+  tasks.forEach((task,i)=>{
+    const el=document.createElement('div');
+    el.className=`task-item${task.done?' done':''}`;
+    el.dataset.idx=i;
+    const check=document.createElement('div');check.className='task-check';
+    const num=document.createElement('div');num.className='task-num';num.textContent=String(i+1).padStart(2,'0');
+    const dot=document.createElement('div');dot.className=`task-priority ${COLORS[i%3]}`;
+    if(task.editing){
+      const inp=document.createElement('input');inp.className='task-edit-input';inp.value=task.text;inp.type='text';
+      el.append(check,num,dot,inp);list.appendChild(el);
+      requestAnimationFrame(()=>{inp.focus();inp.selectionStart=inp.value.length;});
+      inp.addEventListener('keydown',e=>{
+        if(e.key==='Enter'){e.stopPropagation();task.text=inp.value.trim()||task.text;task.editing=false;setMode('normal');save();renderList();showToast('Mission updated ✎');}
+        else if(e.key==='Escape'){e.stopPropagation();task.editing=false;setMode('normal');renderList();}
+      });
+      inp.addEventListener('blur',()=>{if(task.editing){task.text=inp.value.trim()||task.text;task.editing=false;setMode('normal');save();renderList();}});
+    } else {
+      const text=document.createElement('div');text.className='task-text';text.textContent=task.text;
+      el.append(check,num,dot,text);
+    }
+    el.addEventListener('click',()=>{if(mode==='adding')return;if(selectedIdx===i)completeTask(i);else{selectedIdx=i;moveHighlight();}});
+    list.appendChild(el);
+  });
+  requestAnimationFrame(()=>requestAnimationFrame(moveHighlight));
+}
+function moveHighlight(){
+  const hl=document.getElementById('sel-highlight'),list=document.getElementById('task-list');
+  if(selectedIdx<0||!tasks.length||!list.children[selectedIdx]){hl.style.opacity='0';return;}
+  const item=list.children[selectedIdx];
+  hl.style.top=item.offsetTop+'px';hl.style.height=item.offsetHeight+'px';hl.style.opacity='1';
+  item.scrollIntoView({block:'nearest',behavior:'smooth'});
 }
 
 // ─── TOAST ───────────────────────────────────────────────────────────────────
 let toastTimer;
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), 1900);
-}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),1900);}
 
 // ─── PARTICLES ───────────────────────────────────────────────────────────────
-function burst(x, y, color, count=10) {
-  for (let i=0; i<count; i++) {
-    const p = document.createElement('div'); p.className = 'particle';
-    const a = (Math.PI*2*i)/count + Math.random()*0.5, d = 30+Math.random()*55, s = 2+Math.random()*4;
-    p.style.cssText=`left:${x}px;top:${y}px;width:${s}px;height:${s}px;background:${color};box-shadow:0 0 ${s*2}px ${color};--tx:${Math.cos(a)*d}px;--ty:${Math.sin(a)*d}px;`;
-    document.body.appendChild(p); p.addEventListener('animationend',()=>p.remove());
-  }
-  const ring = document.createElement('div'); ring.className='orbit-ring-fx';
-  ring.style.cssText=`left:${x}px;top:${y}px;width:30px;height:30px;border-color:${color};`;
-  document.body.appendChild(ring); ring.addEventListener('animationend',()=>ring.remove());
+function burst(x,y,color,count=10){
+  for(let i=0;i<count;i++){const p=document.createElement('div');p.className='particle';const a=(Math.PI*2*i)/count+Math.random()*0.5,d=30+Math.random()*55,s=2+Math.random()*4;p.style.cssText=`left:${x}px;top:${y}px;width:${s}px;height:${s}px;background:${color};box-shadow:0 0 ${s*2}px ${color};--tx:${Math.cos(a)*d}px;--ty:${Math.sin(a)*d}px;`;document.body.appendChild(p);p.addEventListener('animationend',()=>p.remove());}
+  const ring=document.createElement('div');ring.className='orbit-ring-fx';ring.style.cssText=`left:${x}px;top:${y}px;width:30px;height:30px;border-color:${color};`;document.body.appendChild(ring);ring.addEventListener('animationend',()=>ring.remove());
 }
-function warpEffect() {
-  for (let i=0; i<8; i++) {
-    const l=document.createElement('div'); l.className='warp-line';
-    l.style.cssText=`left:${10+Math.random()*80}vw;--x:${(Math.random()-0.5)*20}px;animation-delay:${Math.random()*0.2}s;`;
-    document.body.appendChild(l); l.addEventListener('animationend',()=>l.remove());
-  }
-}
+function warpEffect(){for(let i=0;i<8;i++){const l=document.createElement('div');l.className='warp-line';l.style.cssText=`left:${10+Math.random()*80}vw;--x:${(Math.random()-0.5)*20}px;animation-delay:${Math.random()*0.2}s;`;document.body.appendChild(l);l.addEventListener('animationend',()=>l.remove());}}
 
 // ─── MODE ────────────────────────────────────────────────────────────────────
-function setMode(m) {
-  mode = m;
-  const ind = document.getElementById('mode-indicator');
-  ind.className = m !== 'normal' ? m : '';
-  ind.textContent = { normal:'ORBIT CONTROL', adding:'ADDING MISSION', ring:'RING NAVIGATION', editing:'EDITING MISSION' }[m] || 'ORBIT CONTROL';
+function setMode(m){
+  mode=m;
+  const ind=document.getElementById('mode-indicator');
+  ind.className=m!=='normal'?m:'';
+  ind.textContent={normal:'ORBIT CONTROL',adding:'ADDING MISSION',ring:'RING NAVIGATION',editing:'EDITING MISSION'}[m]||'ORBIT CONTROL';
 }
 
 // ─── ACTIONS ─────────────────────────────────────────────────────────────────
-function addTask(text) {
-  if (!text.trim()) return;
-  const col = TASK_COLORS[tasks.length % TASK_COLORS.length];
-  tasks.push({ text: text.trim(), done: false, id: Date.now() });
-  const newIdx = tasks.length - 1;
-  newTaskAnimating = { angle: (newIdx / tasks.length) * Math.PI * 2 + ringRotation, progress: 0, color: col };
-  warpEffect();
-  burst(window.innerWidth/2, window.innerHeight*0.5, col.fill, 14);
-  showToast('Mission logged 🚀');
-  save();
+function addTask(text){
+  if(!text.trim()) return;
+  const col=TASK_COLORS[tasks.length%TASK_COLORS.length];
+  tasks.push({text:text.trim(),done:false,id:Date.now()});
+  const ni=tasks.length-1;
+  newTaskAnimating={angle:(ni/tasks.length)*Math.PI*2+ringRotation,progress:0,color:col};
+  warpEffect();burst(innerWidth/2,innerHeight*0.5,col.fill,14);
+  showToast('Mission logged 🚀');save();
+  if(currentView==='list') renderList();
 }
-function completeTask(idx) {
-  if (idx<0||idx>=tasks.length) return;
-  tasks[idx].done = !tasks[idx].done;
-  burst(window.innerWidth/2, window.innerHeight*0.5, tasks[idx].done ? '#00ffcc' : TASK_COLORS[idx%TASK_COLORS.length].fill, 12);
-  showToast(tasks[idx].done ? 'Mission complete 🛸' : 'Mission reopened ○');
-  save();
+function completeTask(idx){
+  if(idx<0||idx>=tasks.length) return;
+  tasks[idx].done=!tasks[idx].done;
+  burst(innerWidth/2,innerHeight*0.5,tasks[idx].done?'#00ffcc':TASK_COLORS[idx%TASK_COLORS.length].fill,12);
+  showToast(tasks[idx].done?'Mission complete 🛸':'Mission reopened ○');save();
+  if(currentView==='list') renderList();
 }
-function deleteTask(idx) {
-  if (idx<0||idx>=tasks.length) return;
-  burst(window.innerWidth/2, window.innerHeight*0.5, '#ff4d6d', 10);
-  tasks.splice(idx, 1);
-  if (selectedIdx >= tasks.length) selectedIdx = Math.max(0, tasks.length-1);
-  if (tasks.length === 0) { selectedIdx = -1; setMode('normal'); }
-  showToast('Mission scrubbed ✕');
-  save();
+function deleteTask(idx){
+  if(idx<0||idx>=tasks.length) return;
+  burst(innerWidth/2,innerHeight*0.5,'#ff4d6d',10);
+  tasks.splice(idx,1);
+  if(selectedIdx>=tasks.length) selectedIdx=Math.max(0,tasks.length-1);
+  if(tasks.length===0){selectedIdx=-1;setMode('normal');}
+  showToast('Mission scrubbed ✕');save();
+  if(currentView==='list') renderList();
 }
-function startEditTask(idx) {
-  if (idx<0||idx>=tasks.length||tasks[idx].done) return;
-  tasks[idx].editing = true;
-  setMode('editing');
-  const editEl = document.getElementById('task-box-edit');
-  editEl.value = tasks[idx].text;
-  editEl.style.display = 'block';
-  document.getElementById('task-box-text').style.display = 'none';
-  requestAnimationFrame(() => { editEl.focus(); editEl.selectionStart = editEl.value.length; });
+function startEditTask(idx){
+  if(idx<0||idx>=tasks.length||tasks[idx].done) return;
+  tasks[idx].editing=true;setMode('editing');
+  if(currentView==='list'){renderList();return;}
+  const editEl=document.getElementById('task-box-edit');
+  editEl.value=tasks[idx].text;editEl.style.display='block';
+  document.getElementById('task-box-text').style.display='none';
+  requestAnimationFrame(()=>{editEl.focus();editEl.selectionStart=editEl.value.length;});
 }
-function commitEdit(idx) {
-  if (idx<0||idx>=tasks.length) return;
-  const editEl = document.getElementById('task-box-edit');
-  const v = editEl.value.trim();
-  if (v) tasks[idx].text = v;
-  tasks[idx].editing = false;
-  editEl.style.display = 'none';
-  setMode('ring');
-  showToast('Mission updated ✎');
-  save();
+function commitEdit(idx){
+  if(idx<0||idx>=tasks.length) return;
+  const editEl=document.getElementById('task-box-edit');
+  const v=editEl.value.trim();if(v) tasks[idx].text=v;
+  tasks[idx].editing=false;editEl.style.display='none';
+  setMode('ring');showToast('Mission updated ✎');save();
 }
 
-// ─── TAB CYCLING ─────────────────────────────────────────────────────────────
-// The fundamental issue: `blur` on taskInput fires synchronously before
-// the keydown handler can set mode. We avoid this by NOT relying on blur
-// to manage mode — instead we track focus state ourselves with a flag.
-const taskInput   = document.getElementById('task-input');
-const taskBoxEdit = document.getElementById('task-box-edit');
+// ─── FOCUS / TAB MANAGEMENT ──────────────────────────────────────────────────
+const taskInput=document.getElementById('task-input');
+const taskBoxEdit=document.getElementById('task-box-edit');
+let suppressInputBlur=false;
 
-// Flag: we are programmatically blurring the input to go to ring, ignore the blur event
-let suppressInputBlur = false;
+function goToRing(){if(!tasks.length) return;suppressInputBlur=true;taskInput.blur();suppressInputBlur=false;if(selectedIdx<0)selectedIdx=0;setMode('ring');}
+function goToInput(){setMode('adding');taskInput.focus();}
 
-function goToRing() {
-  if (tasks.length === 0) return;
-  suppressInputBlur = true;
-  taskInput.blur();
-  suppressInputBlur = false;
-  if (selectedIdx < 0) selectedIdx = 0;
-  setMode('ring');
-}
+taskInput.addEventListener('focus',()=>{if(!suppressInputBlur)setMode('adding');});
+taskInput.addEventListener('blur',()=>{if(suppressInputBlur)return;if(mode==='adding')setMode('normal');});
 
-function goToInput() {
-  // When ring→input, we call taskInput.focus() which triggers the focus handler
-  // which sets mode='adding'. That's correct. No suppression needed.
-  setMode('adding'); // set before focus so focus handler is consistent
-  taskInput.focus();
-}
-
-taskInput.addEventListener('focus', () => {
-  // Only update mode if we aren't mid-tab-suppression
-  if (!suppressInputBlur) setMode('adding');
-});
-taskInput.addEventListener('blur', () => {
-  if (suppressInputBlur) return; // programmatic blur for ring nav, ignore
-  // User clicked away or pressed Escape etc
-  if (mode === 'adding') setMode('normal');
-});
-
-// taskInput key handler — only Tab/Enter/Escape
-taskInput.addEventListener('keydown', e => {
-  if (e.key === 'Tab') {
-    e.preventDefault();
-    e.stopPropagation(); // prevent global handler seeing it
+taskInput.addEventListener('keydown',e=>{
+  if(e.key==='Tab'){
+    e.preventDefault();e.stopPropagation();
+    if(e.shiftKey){toggleView();return;}
     goToRing();
-  } else if (e.key === 'Enter') {
-    const val = taskInput.value.trim();
-    if (val) { addTask(val); taskInput.value = ''; }
-    suppressInputBlur = true;
-    taskInput.blur();
-    suppressInputBlur = false;
-    setMode('normal');
-  } else if (e.key === 'Escape') {
-    taskInput.value = '';
-    suppressInputBlur = true;
-    taskInput.blur();
-    suppressInputBlur = false;
-    setMode('normal');
+  } else if(e.key==='Enter'){
+    const val=taskInput.value.trim();
+    if(val){addTask(val);taskInput.value='';}
+    suppressInputBlur=true;taskInput.blur();suppressInputBlur=false;setMode('normal');
+  } else if(e.key==='Escape'){
+    taskInput.value='';suppressInputBlur=true;taskInput.blur();suppressInputBlur=false;setMode('normal');
   }
-}, true); // capture phase so stopPropagation reliably blocks global
+},true);
 
-// taskBoxEdit handlers
-taskBoxEdit.addEventListener('keydown', e => {
-  if (e.key === 'Enter') { e.stopPropagation(); commitEdit(selectedIdx); }
-  else if (e.key === 'Escape') { e.stopPropagation(); if(tasks[selectedIdx]) tasks[selectedIdx].editing=false; setMode('ring'); }
+taskBoxEdit.addEventListener('keydown',e=>{
+  if(e.key==='Enter'){e.stopPropagation();commitEdit(selectedIdx);}
+  else if(e.key==='Escape'){e.stopPropagation();if(tasks[selectedIdx])tasks[selectedIdx].editing=false;setMode('ring');}
 });
-taskBoxEdit.addEventListener('blur', () => {
-  if (mode === 'editing' && selectedIdx >= 0 && tasks[selectedIdx]?.editing) commitEdit(selectedIdx);
-});
+taskBoxEdit.addEventListener('blur',()=>{if(mode==='editing'&&selectedIdx>=0&&tasks[selectedIdx]?.editing)commitEdit(selectedIdx);});
 
-// ─── GLOBAL KEY HANDLER ───────────────────────────────────────────────────────
-document.addEventListener('keydown', e => {
-  const active = document.activeElement;
-  if (active === taskInput)   return; // taskInput capture handler takes precedence
-  if (active === taskBoxEdit) return;
+// ─── GLOBAL KEYS ─────────────────────────────────────────────────────────────
+document.addEventListener('keydown',e=>{
+  const active=document.activeElement;
+  if(active===taskInput) return;
+  if(active===taskBoxEdit) return;
+  if(active?.classList?.contains('task-edit-input')) return;
 
-  switch (e.key) {
+  if(e.key==='Tab'&&e.shiftKey){e.preventDefault();toggleView();return;}
+
+  switch(e.key){
     case 'Tab':
       e.preventDefault();
-      // Cycle: ring ↔ input
-      if (mode === 'ring') {
-        goToInput();
-      } else if (tasks.length > 0) {
-        goToRing();
-      } else {
-        goToInput();
-      }
+      if(mode==='ring') goToInput(); else if(tasks.length>0) goToRing(); else goToInput();
       break;
+    case 'n': case 'N': e.preventDefault(); goToInput(); break;
 
-    case 'n': case 'N':
-      e.preventDefault();
-      goToInput();
-      break;
-
-    // RIGHT = next task (clockwise), LEFT = previous task (counter-clockwise)
     case 'ArrowRight': case 'ArrowDown': case 'j':
       e.preventDefault();
-      if (!tasks.length) break;
-      if (mode !== 'ring') { if (selectedIdx<0) selectedIdx=0; setMode('ring'); break; }
-      selectedIdx = (selectedIdx + 1) % tasks.length;
-      break;
+      if(!tasks.length) break;
+      if(currentView==='list'){selectedIdx=selectedIdx<0?0:Math.min(tasks.length-1,selectedIdx+1);if(mode!=='ring')setMode('ring');moveHighlight();break;}
+      if(mode!=='ring'){if(selectedIdx<0)selectedIdx=0;setMode('ring');break;}
+      selectedIdx=(selectedIdx+1)%tasks.length; break;
 
     case 'ArrowLeft': case 'ArrowUp': case 'k':
       e.preventDefault();
-      if (!tasks.length) break;
-      if (mode !== 'ring') { if (selectedIdx<0) selectedIdx=0; setMode('ring'); break; }
-      selectedIdx = (selectedIdx - 1 + tasks.length) % tasks.length;
-      break;
+      if(!tasks.length) break;
+      if(currentView==='list'){selectedIdx=selectedIdx<0?0:Math.max(0,selectedIdx-1);if(mode!=='ring')setMode('ring');moveHighlight();break;}
+      if(mode!=='ring'){if(selectedIdx<0)selectedIdx=0;setMode('ring');break;}
+      selectedIdx=(selectedIdx-1+tasks.length)%tasks.length; break;
 
-    case ' ':
-      e.preventDefault();
-      if (mode === 'ring' && selectedIdx >= 0) completeTask(selectedIdx);
-      break;
-    case 'e': case 'E':
-      if (mode === 'ring' && selectedIdx >= 0) startEditTask(selectedIdx);
-      break;
-    case 'Delete':
-      if (mode === 'ring' && selectedIdx >= 0) deleteTask(selectedIdx);
-      break;
-    case 'Backspace':
-      if (active === document.body && mode === 'ring' && selectedIdx >= 0) {
-        e.preventDefault(); deleteTask(selectedIdx);
-      }
-      break;
+    case ' ': e.preventDefault(); if(selectedIdx>=0) completeTask(selectedIdx); break;
+    case 'e': case 'E': if(selectedIdx>=0) startEditTask(selectedIdx); break;
+    case 'Delete': if(selectedIdx>=0) deleteTask(selectedIdx); break;
+    case 'Backspace': if(active===document.body&&selectedIdx>=0){e.preventDefault();deleteTask(selectedIdx);} break;
     case 'Escape':
-      if (mode === 'ring') { selectedIdx = -1; setMode('normal'); }
+      if(settingsOpen){toggleSettings();break;}
+      if(mode==='ring'){selectedIdx=-1;setMode('normal');}
       break;
   }
 });
 
 // ─── EXPORT / IMPORT ─────────────────────────────────────────────────────────
-function exportTasks() {
-  if (!tasks.length) { showToast('No missions to export'); return; }
-  const blob = new Blob([JSON.stringify({ version:1, exported:new Date().toISOString(), tasks }, null, 2)], { type:'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href=url; a.download=`orbit-missions-${new Date().toISOString().slice(0,10)}.json`;
-  a.click(); URL.revokeObjectURL(url);
+function exportTasks(){
+  if(!tasks.length){showToast('No missions to export');return;}
+  const blob=new Blob([JSON.stringify({version:1,exported:new Date().toISOString(),tasks},null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download=`orbit-missions-${new Date().toISOString().slice(0,10)}.json`;a.click();URL.revokeObjectURL(url);
   showToast('Missions exported 💾');
 }
-function importTasks(event) {
-  const file = event.target.files[0]; if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    try {
-      const data = JSON.parse(e.target.result);
-      const imported = Array.isArray(data) ? data : (data.tasks || []);
-      if (!Array.isArray(imported)) throw new Error();
-      let added = 0;
-      imported.forEach(t => {
-        if (t.text && !tasks.find(x => x.text === t.text)) {
-          tasks.push({ text:t.text, done:!!t.done, id:t.id||Date.now()+added });
-          added++;
-        }
-      });
+function importTasks(event){
+  const file=event.target.files[0];if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      const imported=Array.isArray(data)?data:(data.tasks||[]);
+      if(!Array.isArray(imported)) throw new Error();
+      let added=0;
+      imported.forEach(t=>{if(t.text&&!tasks.find(x=>x.text===t.text)){tasks.push({text:t.text,done:!!t.done,id:t.id||Date.now()+added});added++;}});
       save();
-      if (added > 0) {
-        if (selectedIdx < 0 && tasks.length > 0) selectedIdx = 0;
-        showToast(`${added} mission${added>1?'s':''} imported 🚀`);
-        burst(window.innerWidth/2, window.innerHeight*0.5, '#b060ff', 14);
-      } else { showToast('No new missions found'); }
-    } catch { showToast('Import failed — invalid file'); }
-    event.target.value = '';
+      if(added>0){if(selectedIdx<0&&tasks.length>0)selectedIdx=0;showToast(`${added} mission${added>1?'s':''} imported 🚀`);burst(innerWidth/2,innerHeight*0.5,'#b060ff',14);}
+      else showToast('No new missions found');
+    }catch{showToast('Import failed — invalid file');}
+    event.target.value='';
+    if(currentView==='list') renderList();
   };
   reader.readAsText(file);
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
-if (tasks.length > 0) selectedIdx = 0;
+if(tasks.length>0) selectedIdx=0;
 taskInput.focus();
 </script>
 </body>
