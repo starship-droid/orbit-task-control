@@ -1,0 +1,19 @@
+name: "💬 Other"
+description: "Something else"
+title: "[Other] "
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: "Description"
+      placeholder: "Tell us what's on your mind"
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: "Additional context"
+      placeholder: "Any other details or information"
+    validations:
+      required: false
