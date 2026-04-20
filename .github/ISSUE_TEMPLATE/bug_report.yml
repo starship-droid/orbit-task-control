@@ -1,0 +1,20 @@
+name: "🐛 Bug Report"
+description: "Report a bug"
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: "Description"
+      placeholder: "What happened and what did you expect?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: "Additional context"
+      placeholder: "Screenshots, steps to reproduce, or any other details"
+    validations:
+      required: false

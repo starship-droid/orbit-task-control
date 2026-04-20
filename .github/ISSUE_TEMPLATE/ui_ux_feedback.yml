@@ -1,0 +1,20 @@
+name: "🎨 UI/UX Feedback"
+description: "Feedback on design or user experience"
+title: "[UI/UX] "
+labels: ["ui/ux"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: "Description"
+      placeholder: "What looks off or could be improved?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: "Additional context"
+      placeholder: "Screenshots, device info, or other details"
+    validations:
+      required: false
