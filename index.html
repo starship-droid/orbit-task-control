@@ -395,8 +395,8 @@ html, body {
         <!-- drawn dynamically by JS -->
       </g>
 
-      <!-- TASKS BEHIND PLANET -->
-      <g id="tasks-behind" clip-path="url(#taskBehindClip)">
+      <!-- TASKS BEHIND PLANET - no clip, always fully visible -->
+      <g id="tasks-behind">
       </g>
 
       <!-- SATURN BODY -->
@@ -416,8 +416,8 @@ html, body {
         <!-- drawn dynamically by JS -->
       </g>
 
-      <!-- TASKS IN FRONT OF PLANET -->
-      <g id="tasks-front" clip-path="url(#taskFrontClip)">
+      <!-- TASKS IN FRONT OF PLANET - no clip, always fully visible -->
+      <g id="tasks-front">
       </g>
 
       <!-- Empty state text inside saturn area -->
@@ -445,11 +445,14 @@ html, body {
     <div class="corner tl"></div><div class="corner tr"></div>
     <div class="corner bl"></div><div class="corner br"></div>
     <div class="shortcut"><span class="key">TAB</span> Switch focus</div>
-    <div class="shortcut"><span class="key">↑ ↓</span> Rotate ring</div>
+    <div class="shortcut"><span class="key">↑ ↓ ← →</span> Rotate ring</div>
     <div class="shortcut"><span class="key">Space</span> Complete</div>
     <div class="shortcut"><span class="key">E</span> Edit</div>
     <div class="shortcut"><span class="key">Del</span> Delete</div>
     <div class="shortcut"><span class="key">N</span> New mission</div>
+    <div class="shortcut" style="cursor:pointer" onclick="exportTasks()" title="Export tasks as JSON file"><span class="key">⬇</span> Export</div>
+    <div class="shortcut" style="cursor:pointer" onclick="document.getElementById('import-file').click()" title="Import tasks from JSON file"><span class="key">⬆</span> Import</div>
+    <input type="file" id="import-file" accept=".json" style="display:none" onchange="importTasks(event)"/>
   </div>
 </div>
 
@@ -461,7 +464,6 @@ html, body {
   function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
   resize();
   window.addEventListener('resize', resize);
-
   const stars = Array.from({length: 200}, () => ({
     x: Math.random(), y: Math.random(),
     r: Math.random() * 1.3 + 0.2,
@@ -469,18 +471,16 @@ html, body {
     speed: Math.random() * 0.012 + 0.004,
     phase: Math.random() * Math.PI * 2
   }));
-
   const shoots = [];
   function maybeShoot() {
     if (Math.random() < 0.3) shoots.push({
       x: Math.random() * canvas.width, y: Math.random() * canvas.height * 0.5,
       vx: (Math.random() * 4 + 3) * (Math.random() < 0.5 ? 1 : -1),
-      vy: Math.random() * 2 + 1, len: Math.random() * 80 + 40, op: 0.9
+      vy: Math.random() * 2 + 1, op: 0.9
     });
     setTimeout(maybeShoot, Math.random() * 4000 + 2000);
   }
   maybeShoot();
-
   let t = 0;
   function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height); t += 0.016;
@@ -504,7 +504,7 @@ html, body {
   draw();
 })();
 
-// ─── NEBULAS ────────────────────────────────────────────────────────────────
+// ─── NEBULAS ─────────────────────────────────────────────────────────────────
 (function() {
   [
     { color: 'rgba(80,0,180,0.18)', size: 500, top: '10%', left: '5%', delay: '0s' },
@@ -521,415 +521,294 @@ html, body {
 // ─── STATE ───────────────────────────────────────────────────────────────────
 let tasks = JSON.parse(localStorage.getItem('orbit-tasks') || '[]');
 let selectedIdx = -1;
-let mode = 'normal'; // normal | adding | ring | editing
+// Modes: 'normal' | 'adding' | 'ring' | 'editing'
+// 'adding'  = input field has focus
+// 'ring'    = ring has focus, no real DOM element focused
+// 'normal'  = nothing focused
+// 'editing' = task-box-edit has focus
+let mode = 'normal';
 
 function save() { localStorage.setItem('orbit-tasks', JSON.stringify(tasks)); }
 
-// Task colors (galaxy palette)
 const TASK_COLORS = [
-  { fill: '#b060ff', glow: 'rgba(176,96,255,0.8)' },   // purple
-  { fill: '#4dc9ff', glow: 'rgba(77,201,255,0.8)' },   // blue
-  { fill: '#00ffcc', glow: 'rgba(0,255,204,0.8)' },    // teal
-  { fill: '#ff9d3d', glow: 'rgba(255,157,61,0.8)' },   // orange
-  { fill: '#ff5cf7', glow: 'rgba(255,92,247,0.8)' },   // pink
-  { fill: '#7df9ff', glow: 'rgba(125,249,255,0.8)' },  // electric cyan
+  { fill: '#b060ff', glow: 'rgba(176,96,255,0.8)' },
+  { fill: '#4dc9ff', glow: 'rgba(77,201,255,0.8)' },
+  { fill: '#00ffcc', glow: 'rgba(0,255,204,0.8)' },
+  { fill: '#ff9d3d', glow: 'rgba(255,157,61,0.8)' },
+  { fill: '#ff5cf7', glow: 'rgba(255,92,247,0.8)' },
+  { fill: '#7df9ff', glow: 'rgba(125,249,255,0.8)' },
 ];
 
-// ─── SATURN RING ENGINE ──────────────────────────────────────────────────────
+// ─── SATURN RING ENGINE ───────────────────────────────────────────────────────
 const CX = 350, CY = 230;
-const RING_RX = 210, RING_RY = 52;   // ring ellipse radii
-const RING_TILT = -0.18;              // radians — slight tilt off x axis
-
-// Ring particle configuration
+const RING_RX = 210, RING_RY = 52;
+const RING_TILT = -0.18;
 const RING_PARTICLES = 80;
-let ringRotation = 0;                 // current rotation angle offset
-let targetRingRotation = 0;          // target (for smooth snapping)
-let ringAnimating = false;
-let newTaskAnimating = null;          // {angle, progress, color} for spawn anim
+let ringRotation = 0;
+let newTaskAnimating = null;
 
-// Convert ellipse angle to screen XY (with tilt)
 function ellipsePoint(angle) {
-  const cosA = Math.cos(angle), sinA = Math.sin(angle);
-  const x = CX + RING_RX * cosA;
-  const yBase = CY + RING_RY * sinA;
-  // Apply a small tilt: rotate the point slightly around planet center
-  const dx = x - CX, dy = yBase - CY;
-  const tx = dx * Math.cos(RING_TILT) - dy * Math.sin(RING_TILT);
-  const ty = dx * Math.sin(RING_TILT) + dy * Math.cos(RING_TILT);
-  return { x: CX + tx, y: CY + ty };
+  const x = CX + RING_RX * Math.cos(angle);
+  const y = CY + RING_RY * Math.sin(angle);
+  const dx = x - CX, dy = y - CY;
+  return {
+    x: CX + dx * Math.cos(RING_TILT) - dy * Math.sin(RING_TILT),
+    y: CY + dx * Math.sin(RING_TILT) + dy * Math.cos(RING_TILT)
+  };
 }
 
-// Is a point "behind" the planet (top half of ellipse = behind)
-function isBehind(angle) {
-  const normAngle = ((angle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
-  return normAngle > Math.PI; // top arc = behind
+// "Behind" = top half of the ellipse in screen space (sin < 0 after tilt = above centre)
+// We use the raw angle's sin to determine layer order for RING PARTICLES only
+function isBehindRing(angle) {
+  const norm = ((angle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+  return norm > Math.PI; // angles π..2π trace the top arc
 }
 
-function drawRing(ringRotation) {
-  const behind = document.getElementById('ring-behind');
-  const front = document.getElementById('ring-front');
-  behind.innerHTML = '';
-  front.innerHTML = '';
-
-  // Draw concentric ring ellipses (3 rings with varying opacity)
-  const rings = [
-    { scale: 1.0, opacity: 0.55, strokeW: 1.2 },
-    { scale: 0.88, opacity: 0.35, strokeW: 0.8 },
-    { scale: 1.12, opacity: 0.25, strokeW: 0.6 },
-  ];
-
-  rings.forEach(r => {
-    const rx = RING_RX * r.scale;
-    const ry = RING_RY * r.scale;
-    // Build path for tilted ellipse
-    const pts = [];
-    for (let a = 0; a <= Math.PI * 2; a += 0.05) {
-      const cosA = Math.cos(a), sinA = Math.sin(a);
-      let px = CX + rx * cosA;
-      let py = CY + ry * sinA;
-      const dx = px - CX, dy = py - CY;
-      const tx = dx * Math.cos(RING_TILT) - dy * Math.sin(RING_TILT);
-      const ty = dx * Math.sin(RING_TILT) + dy * Math.cos(RING_TILT);
-      pts.push([CX + tx, CY + ty]);
-    }
-    const pathData = pts.map((p, i) => (i === 0 ? `M${p[0]},${p[1]}` : `L${p[0]},${p[1]}`)).join(' ') + 'Z';
-
-    // Behind half
-    const eb = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    eb.setAttribute('d', pathData);
-    eb.setAttribute('fill', 'none');
-    eb.setAttribute('stroke', `rgba(160,150,200,${r.opacity * 0.6})`);
-    eb.setAttribute('stroke-width', r.strokeW);
-    behind.appendChild(eb);
-
-    // Front half
-    const ef = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    ef.setAttribute('d', pathData);
-    ef.setAttribute('fill', 'none');
-    ef.setAttribute('stroke', `rgba(200,190,230,${r.opacity})`);
-    ef.setAttribute('stroke-width', r.strokeW);
-    front.appendChild(ef);
-  });
-
-  // Draw ring dust particles
-  for (let i = 0; i < RING_PARTICLES; i++) {
-    const angle = (i / RING_PARTICLES) * Math.PI * 2 + ringRotation;
-    // Vary radial position slightly for depth
-    const radialVariance = (Math.sin(i * 7.3) * 0.18 + Math.cos(i * 3.1) * 0.08);
-    const scaleX = 1 + radialVariance;
-    const scaleY = 1 + radialVariance * 0.4;
-
-    const cosA = Math.cos(angle), sinA = Math.sin(angle);
-    let px = CX + RING_RX * scaleX * cosA;
-    let py = CY + RING_RY * scaleY * sinA;
-    const dx = px - CX, dy = py - CY;
-    const tx = dx * Math.cos(RING_TILT) - dy * Math.sin(RING_TILT);
-    const ty = dx * Math.sin(RING_TILT) + dy * Math.cos(RING_TILT);
-    const fx = CX + tx, fy = CY + ty;
-
-    // Vary size
-    const baseSize = i % 5 === 0 ? 2.8 : i % 3 === 0 ? 1.8 : 1.0;
-    const col = i % 5 === 0 ? 'rgba(200,190,220,0.7)' : i % 3 === 0 ? 'rgba(170,160,200,0.5)' : 'rgba(140,130,170,0.35)';
-
-    const behind_half = isBehind(angle);
-    const parent = behind_half ? behind : front;
-    const opacity = behind_half ? 0.45 : 1.0;
-
-    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-    circle.setAttribute('cx', fx);
-    circle.setAttribute('cy', fy);
-    circle.setAttribute('r', baseSize);
-    circle.setAttribute('fill', col);
-    circle.setAttribute('opacity', opacity);
-    parent.appendChild(circle);
-  }
-}
-
-// Get the angle on the ring for task index i (tasks are evenly spaced)
-function taskAngle(idx) {
-  if (tasks.length === 0) return 0;
-  return (idx / tasks.length) * Math.PI * 2 + ringRotation;
-}
-
-// Angle for selected task to appear at "front-bottom" = angle PI/2 (6 o'clock position)
-const SELECTED_ANGLE = Math.PI / 2;  // bottom of ellipse
+const SELECTED_ANGLE = Math.PI / 2;
 
 function getRotationForSelected(idx) {
   if (tasks.length === 0) return 0;
-  // We want task idx to be at SELECTED_ANGLE
-  const naturalAngle = (idx / tasks.length) * Math.PI * 2;
-  return SELECTED_ANGLE - naturalAngle;
+  return SELECTED_ANGLE - (idx / tasks.length) * Math.PI * 2;
 }
 
-function drawTasks(ringRot) {
-  const behind = document.getElementById('tasks-behind');
-  const front = document.getElementById('tasks-front');
+function drawRing(rot) {
+  const behind = document.getElementById('ring-behind');
+  const front  = document.getElementById('ring-front');
   behind.innerHTML = '';
-  front.innerHTML = '';
+  front.innerHTML  = '';
+
+  // Three concentric ellipse outlines
+  [
+    { scale: 1.0,  opacity: 0.55, sw: 1.2 },
+    { scale: 0.88, opacity: 0.35, sw: 0.8 },
+    { scale: 1.12, opacity: 0.25, sw: 0.6 },
+  ].forEach(r => {
+    const pts = [];
+    for (let a = 0; a <= Math.PI * 2; a += 0.05) {
+      const px = CX + RING_RX * r.scale * Math.cos(a);
+      const py = CY + RING_RY * r.scale * Math.sin(a);
+      const dx = px - CX, dy = py - CY;
+      pts.push([CX + dx * Math.cos(RING_TILT) - dy * Math.sin(RING_TILT),
+                CY + dx * Math.sin(RING_TILT) + dy * Math.cos(RING_TILT)]);
+    }
+    const d = pts.map((p,i) => (i===0?`M${p[0]},${p[1]}`:`L${p[0]},${p[1]}`)).join(' ')+'Z';
+    const mkPath = (stroke, sw) => {
+      const el = document.createElementNS('http://www.w3.org/2000/svg','path');
+      el.setAttribute('d', d); el.setAttribute('fill','none');
+      el.setAttribute('stroke', stroke); el.setAttribute('stroke-width', sw);
+      return el;
+    };
+    behind.appendChild(mkPath(`rgba(160,150,200,${r.opacity*0.6})`, r.sw));
+    front.appendChild(mkPath(`rgba(200,190,230,${r.opacity})`, r.sw));
+  });
+
+  // Dust particles — behind/front split only for the ring dust (not tasks)
+  for (let i = 0; i < RING_PARTICLES; i++) {
+    const angle = (i / RING_PARTICLES) * Math.PI * 2 + rot;
+    const rv = Math.sin(i * 7.3) * 0.18 + Math.cos(i * 3.1) * 0.08;
+    const px = CX + RING_RX * (1+rv) * Math.cos(angle);
+    const py = CY + RING_RY * (1+rv*0.4) * Math.sin(angle);
+    const dx = px - CX, dy = py - CY;
+    const fx = CX + dx * Math.cos(RING_TILT) - dy * Math.sin(RING_TILT);
+    const fy = CY + dx * Math.sin(RING_TILT) + dy * Math.cos(RING_TILT);
+    const sz = i%5===0 ? 2.8 : i%3===0 ? 1.8 : 1.0;
+    const col = i%5===0 ? 'rgba(200,190,220,0.7)' : i%3===0 ? 'rgba(170,160,200,0.5)' : 'rgba(140,130,170,0.35)';
+    const isBehind = isBehindRing(angle);
+    const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('cx', fx); c.setAttribute('cy', fy); c.setAttribute('r', sz);
+    c.setAttribute('fill', col); c.setAttribute('opacity', isBehind ? 0.45 : 1.0);
+    (isBehind ? behind : front).appendChild(c);
+  }
+}
+
+function drawTasks(rot) {
+  // ALL tasks go into tasks-front with no clipping — always fully visible with glow
+  const el = document.getElementById('tasks-front');
+  const elB = document.getElementById('tasks-behind');
+  el.innerHTML = '';
+  elB.innerHTML = '';
 
   tasks.forEach((task, i) => {
-    const angle = (i / tasks.length) * Math.PI * 2 + ringRot;
+    const angle = (i / tasks.length) * Math.PI * 2 + rot;
     const pt = ellipsePoint(angle);
-    const behind_half = isBehind(angle);
-    const parent = behind_half ? behind : front;
-    const colorObj = TASK_COLORS[i % TASK_COLORS.length];
-    const isSelected = (i === selectedIdx) && mode === 'ring';
-    const opacity = behind_half ? 0.5 : 1.0;
-    const r = isSelected ? 11 : (task.done ? 6 : 8);
+    const col = TASK_COLORS[i % TASK_COLORS.length];
+    const isSel = (i === selectedIdx) && mode === 'ring';
+    const r = isSel ? 11 : (task.done ? 6 : 8);
 
-    // Glow circle
-    if (!behind_half) {
-      const glowC = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-      glowC.setAttribute('cx', pt.x);
-      glowC.setAttribute('cy', pt.y);
-      glowC.setAttribute('r', r + 6);
-      glowC.setAttribute('fill', colorObj.glow.replace('0.8', '0.18'));
-      glowC.setAttribute('filter', 'url(#taskGlow)');
-      parent.appendChild(glowC);
-    }
+    const mk = (tag, attrs) => {
+      const e = document.createElementNS('http://www.w3.org/2000/svg', tag);
+      Object.entries(attrs).forEach(([k,v]) => e.setAttribute(k,v));
+      return e;
+    };
 
-    // Main task circle
-    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-    circle.setAttribute('cx', pt.x);
-    circle.setAttribute('cy', pt.y);
-    circle.setAttribute('r', r);
-    circle.setAttribute('fill', task.done ? 'rgba(0,255,204,0.3)' : colorObj.fill);
-    circle.setAttribute('opacity', opacity);
-    if (isSelected) {
-      circle.setAttribute('filter', 'url(#selectedGlow)');
-      circle.setAttribute('stroke', 'rgba(255,255,255,0.6)');
-      circle.setAttribute('stroke-width', '1.5');
-    }
+    el.appendChild(mk('circle', { cx:pt.x, cy:pt.y, r:r+6,
+      fill: col.glow.replace('0.8','0.18'), filter:'url(#taskGlow)' }));
+    el.appendChild(mk('circle', { cx:pt.x, cy:pt.y, r,
+      fill: task.done ? 'rgba(0,255,204,0.3)' : col.fill,
+      ...(isSel ? { filter:'url(#selectedGlow)', stroke:'rgba(255,255,255,0.6)', 'stroke-width':'1.5' } : {}),
+      ...(task.done ? { stroke:'#00ffcc', 'stroke-width':'1.5' } : {}) }));
+
     if (task.done) {
-      circle.setAttribute('stroke', '#00ffcc');
-      circle.setAttribute('stroke-width', '1.5');
-    }
-    parent.appendChild(circle);
-
-    // Done checkmark
-    if (task.done && !behind_half) {
-      const ck = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-      ck.setAttribute('x', pt.x);
-      ck.setAttribute('y', pt.y + 3);
-      ck.setAttribute('text-anchor', 'middle');
-      ck.setAttribute('font-size', '8');
-      ck.setAttribute('fill', '#00ffcc');
-      ck.setAttribute('opacity', opacity);
+      const ck = mk('text', { x:pt.x, y:pt.y+3, 'text-anchor':'middle', 'font-size':'8', fill:'#00ffcc' });
       ck.textContent = '✓';
-      parent.appendChild(ck);
+      el.appendChild(ck);
     }
   });
 
-  // New task spawn animation
+  // Spawn animation
   if (newTaskAnimating) {
     const { angle, progress, color } = newTaskAnimating;
     const pt = ellipsePoint(angle);
-    const behind_half = isBehind(angle);
-    const parent = behind_half ? behind : front;
-    const r = progress < 0.4 ? progress / 0.4 * 14 : progress < 0.7 ? 14 - (progress - 0.4) / 0.3 * 6 : 8;
-    const gAlpha = Math.min(1, progress * 3);
-
-    const spawnCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-    spawnCircle.setAttribute('cx', pt.x);
-    spawnCircle.setAttribute('cy', pt.y);
-    spawnCircle.setAttribute('r', r);
-    spawnCircle.setAttribute('fill', color.fill);
-    spawnCircle.setAttribute('opacity', gAlpha * (behind_half ? 0.5 : 1.0));
-    parent.appendChild(spawnCircle);
+    const r = progress < 0.4 ? (progress/0.4)*14 : progress < 0.7 ? 14-((progress-0.4)/0.3)*6 : 8;
+    const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('cx', pt.x); c.setAttribute('cy', pt.y); c.setAttribute('r', r);
+    c.setAttribute('fill', color.fill); c.setAttribute('opacity', Math.min(1, progress*3));
+    el.appendChild(c);
   }
 }
 
-// ─── ANIMATION LOOP ──────────────────────────────────────────────────────────
+// ─── ANIMATION LOOP ───────────────────────────────────────────────────────────
 let lastTime = 0;
-const BASE_ROTATION_SPEED = 0.0004; // radians per ms — slow idle drift
+const BASE_SPEED = 0.0004;
 
-function animLoop(timestamp) {
-  const dt = timestamp - lastTime;
-  lastTime = timestamp;
+function animLoop(ts) {
+  const dt = ts - lastTime; lastTime = ts;
+  ringRotation += BASE_SPEED * dt;
 
-  // Idle ring rotation (always drifts)
-  ringRotation += BASE_ROTATION_SPEED * dt;
-
-  // Smooth snap to target when in ring mode and we have a selection
   if (mode === 'ring' && tasks.length > 0) {
     const target = getRotationForSelected(selectedIdx);
-    // Normalize difference
-    let diff = target - (ringRotation % (Math.PI * 2));
-    while (diff > Math.PI) diff -= Math.PI * 2;
-    while (diff < -Math.PI) diff += Math.PI * 2;
-
-    // Spring towards target (faster snap)
+    let diff = target - (ringRotation % (Math.PI*2));
+    while (diff >  Math.PI) diff -= Math.PI*2;
+    while (diff < -Math.PI) diff += Math.PI*2;
     ringRotation += diff * 0.08;
   }
 
-  // New task spawn animation
   if (newTaskAnimating) {
     newTaskAnimating.progress += dt / 700;
     if (newTaskAnimating.progress >= 1) newTaskAnimating = null;
   }
 
-  // Update empty state visibility
   const emptyState = document.getElementById('empty-svg-state');
   if (emptyState) emptyState.style.display = tasks.length === 0 ? 'block' : 'none';
 
   drawRing(ringRotation);
   drawTasks(ringRotation);
   updateTaskBox();
-
   requestAnimationFrame(animLoop);
 }
 requestAnimationFrame(animLoop);
 
-// ─── TASK BOX (OVERLAY) ──────────────────────────────────────────────────────
+// ─── TASK BOX ────────────────────────────────────────────────────────────────
 function updateTaskBox() {
-  const box = document.getElementById('selected-task-box');
+  const box    = document.getElementById('selected-task-box');
   const textEl = document.getElementById('task-box-text');
   const metaEl = document.getElementById('task-box-meta');
   const editEl = document.getElementById('task-box-edit');
-  const labelEl = document.getElementById('task-box-label');
+  const lblEl  = document.getElementById('task-box-label');
 
-  if (mode === 'ring' && selectedIdx >= 0 && selectedIdx < tasks.length) {
+  if ((mode === 'ring' || mode === 'editing') && selectedIdx >= 0 && selectedIdx < tasks.length) {
     const task = tasks[selectedIdx];
     box.classList.add('visible');
-
-    if (mode === 'ring' && task.editing) {
-      textEl.style.display = 'none';
-      editEl.style.display = 'block';
-      labelEl.textContent = 'EDIT MISSION';
+    if (task.editing) {
+      textEl.style.display = 'none'; editEl.style.display = 'block';
+      lblEl.textContent = 'EDIT MISSION';
     } else {
-      textEl.style.display = 'block';
-      editEl.style.display = 'none';
+      textEl.style.display = 'block'; editEl.style.display = 'none';
       textEl.textContent = task.text;
       const done = tasks.filter(t => t.done).length;
-      metaEl.textContent = `MISSION ${selectedIdx + 1} / ${tasks.length} · ${done} COMPLETE`;
-      labelEl.textContent = task.done ? 'MISSION COMPLETE' : 'ACTIVE MISSION';
-
-      // Color the border based on task color
+      metaEl.textContent = `MISSION ${selectedIdx+1} / ${tasks.length} · ${done} COMPLETE`;
+      lblEl.textContent = task.done ? 'MISSION COMPLETE' : 'ACTIVE MISSION';
       const col = TASK_COLORS[selectedIdx % TASK_COLORS.length];
       box.style.borderColor = col.fill + '99';
-      box.style.boxShadow = `0 0 28px ${col.glow.replace('0.8', '0.2')}, 0 0 0 1px ${col.fill}22 inset`;
+      box.style.boxShadow = `0 0 28px ${col.glow.replace('0.8','0.2')}, 0 0 0 1px ${col.fill}22 inset`;
     }
-    if (task.done) {
-      textEl.style.textDecoration = 'line-through';
-      textEl.style.color = 'rgba(0,255,204,0.7)';
-    } else {
-      textEl.style.textDecoration = 'none';
-      textEl.style.color = '';
-    }
+    textEl.style.textDecoration = task.done ? 'line-through' : 'none';
+    textEl.style.color = task.done ? 'rgba(0,255,204,0.7)' : '';
   } else {
     box.classList.remove('visible');
   }
 }
 
-// ─── TOAST ────────────────────────────────────────────────────────────────────
+// ─── TOAST ───────────────────────────────────────────────────────────────────
 let toastTimer;
 function showToast(msg) {
   const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
+  t.textContent = msg; t.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove('show'), 1900);
 }
 
-// ─── PARTICLES ────────────────────────────────────────────────────────────────
-function burst(x, y, color, count = 10) {
-  for (let i = 0; i < count; i++) {
-    const p = document.createElement('div');
-    p.className = 'particle';
-    const angle = (Math.PI * 2 * i) / count + Math.random() * 0.5;
-    const dist = 30 + Math.random() * 55;
-    const size = 2 + Math.random() * 4;
-    p.style.cssText = `left:${x}px;top:${y}px;width:${size}px;height:${size}px;background:${color};box-shadow:0 0 ${size*2}px ${color};--tx:${Math.cos(angle)*dist}px;--ty:${Math.sin(angle)*dist}px;`;
-    document.body.appendChild(p);
-    p.addEventListener('animationend', () => p.remove());
+// ─── PARTICLES ───────────────────────────────────────────────────────────────
+function burst(x, y, color, count=10) {
+  for (let i=0; i<count; i++) {
+    const p = document.createElement('div'); p.className = 'particle';
+    const a = (Math.PI*2*i)/count + Math.random()*0.5, d = 30+Math.random()*55, s = 2+Math.random()*4;
+    p.style.cssText=`left:${x}px;top:${y}px;width:${s}px;height:${s}px;background:${color};box-shadow:0 0 ${s*2}px ${color};--tx:${Math.cos(a)*d}px;--ty:${Math.sin(a)*d}px;`;
+    document.body.appendChild(p); p.addEventListener('animationend',()=>p.remove());
   }
-  const ring = document.createElement('div');
-  ring.className = 'orbit-ring-fx';
-  ring.style.cssText = `left:${x}px;top:${y}px;width:30px;height:30px;border-color:${color};`;
-  document.body.appendChild(ring);
-  ring.addEventListener('animationend', () => ring.remove());
+  const ring = document.createElement('div'); ring.className='orbit-ring-fx';
+  ring.style.cssText=`left:${x}px;top:${y}px;width:30px;height:30px;border-color:${color};`;
+  document.body.appendChild(ring); ring.addEventListener('animationend',()=>ring.remove());
 }
-
 function warpEffect() {
-  for (let i = 0; i < 8; i++) {
-    const line = document.createElement('div');
-    line.className = 'warp-line';
-    const xPos = 10 + Math.random() * 80;
-    line.style.cssText = `left:${xPos}vw;--x:${(Math.random()-0.5)*20}px;animation-delay:${Math.random()*0.2}s;`;
-    document.body.appendChild(line);
-    line.addEventListener('animationend', () => line.remove());
+  for (let i=0; i<8; i++) {
+    const l=document.createElement('div'); l.className='warp-line';
+    l.style.cssText=`left:${10+Math.random()*80}vw;--x:${(Math.random()-0.5)*20}px;animation-delay:${Math.random()*0.2}s;`;
+    document.body.appendChild(l); l.addEventListener('animationend',()=>l.remove());
   }
 }
 
-// ─── MODE MANAGEMENT ─────────────────────────────────────────────────────────
+// ─── MODE ────────────────────────────────────────────────────────────────────
 function setMode(m) {
   mode = m;
   const ind = document.getElementById('mode-indicator');
-  ind.className = '';
-  const labels = {
-    normal: 'ORBIT CONTROL',
-    adding: 'ADDING MISSION',
-    ring: 'RING NAVIGATION',
-    editing: 'EDITING MISSION'
-  };
-  if (m !== 'normal') ind.className = m;
-  ind.textContent = labels[m] || 'ORBIT CONTROL';
+  ind.className = m !== 'normal' ? m : '';
+  ind.textContent = { normal:'ORBIT CONTROL', adding:'ADDING MISSION', ring:'RING NAVIGATION', editing:'EDITING MISSION' }[m] || 'ORBIT CONTROL';
 }
 
 // ─── ACTIONS ─────────────────────────────────────────────────────────────────
 function addTask(text) {
   if (!text.trim()) return;
-  const colorObj = TASK_COLORS[tasks.length % TASK_COLORS.length];
+  const col = TASK_COLORS[tasks.length % TASK_COLORS.length];
   tasks.push({ text: text.trim(), done: false, id: Date.now() });
-
-  // Animate: new task spawns into ring position
   const newIdx = tasks.length - 1;
-  const spawnAngle = (newIdx / tasks.length) * Math.PI * 2 + ringRotation;
-  newTaskAnimating = { angle: spawnAngle, progress: 0, color: colorObj };
-
+  newTaskAnimating = { angle: (newIdx / tasks.length) * Math.PI * 2 + ringRotation, progress: 0, color: col };
   warpEffect();
-  burst(window.innerWidth / 2, window.innerHeight * 0.5, colorObj.fill, 14);
+  burst(window.innerWidth/2, window.innerHeight*0.5, col.fill, 14);
   showToast('Mission logged 🚀');
   save();
 }
-
 function completeTask(idx) {
-  if (idx < 0 || idx >= tasks.length) return;
+  if (idx<0||idx>=tasks.length) return;
   tasks[idx].done = !tasks[idx].done;
-  const col = TASK_COLORS[idx % TASK_COLORS.length];
-  burst(window.innerWidth / 2, window.innerHeight * 0.5, tasks[idx].done ? '#00ffcc' : col.fill, 12);
+  burst(window.innerWidth/2, window.innerHeight*0.5, tasks[idx].done ? '#00ffcc' : TASK_COLORS[idx%TASK_COLORS.length].fill, 12);
   showToast(tasks[idx].done ? 'Mission complete 🛸' : 'Mission reopened ○');
   save();
 }
-
 function deleteTask(idx) {
-  if (idx < 0 || idx >= tasks.length) return;
-  burst(window.innerWidth / 2, window.innerHeight * 0.5, '#ff4d6d', 10);
+  if (idx<0||idx>=tasks.length) return;
+  burst(window.innerWidth/2, window.innerHeight*0.5, '#ff4d6d', 10);
   tasks.splice(idx, 1);
-  if (selectedIdx >= tasks.length) selectedIdx = Math.max(0, tasks.length - 1);
+  if (selectedIdx >= tasks.length) selectedIdx = Math.max(0, tasks.length-1);
   if (tasks.length === 0) { selectedIdx = -1; setMode('normal'); }
   showToast('Mission scrubbed ✕');
   save();
 }
-
 function startEditTask(idx) {
-  if (idx < 0 || idx >= tasks.length || tasks[idx].done) return;
+  if (idx<0||idx>=tasks.length||tasks[idx].done) return;
   tasks[idx].editing = true;
   setMode('editing');
-
   const editEl = document.getElementById('task-box-edit');
-  const textEl = document.getElementById('task-box-text');
   editEl.value = tasks[idx].text;
   editEl.style.display = 'block';
-  textEl.style.display = 'none';
+  document.getElementById('task-box-text').style.display = 'none';
   requestAnimationFrame(() => { editEl.focus(); editEl.selectionStart = editEl.value.length; });
 }
-
 function commitEdit(idx) {
-  if (idx < 0 || idx >= tasks.length) return;
+  if (idx<0||idx>=tasks.length) return;
   const editEl = document.getElementById('task-box-edit');
-  const newText = editEl.value.trim();
-  if (newText) tasks[idx].text = newText;
+  const v = editEl.value.trim();
+  if (v) tasks[idx].text = v;
   tasks[idx].editing = false;
   editEl.style.display = 'none';
   setMode('ring');
@@ -937,38 +816,68 @@ function commitEdit(idx) {
   save();
 }
 
-// ─── INPUT HANDLING ───────────────────────────────────────────────────────────
-const taskInput = document.getElementById('task-input');
+// ─── TAB CYCLING ─────────────────────────────────────────────────────────────
+// The fundamental issue: `blur` on taskInput fires synchronously before
+// the keydown handler can set mode. We avoid this by NOT relying on blur
+// to manage mode — instead we track focus state ourselves with a flag.
+const taskInput   = document.getElementById('task-input');
+const taskBoxEdit = document.getElementById('task-box-edit');
 
-taskInput.addEventListener('focus', () => setMode('adding'));
-taskInput.addEventListener('blur', () => { if (mode === 'adding') setMode('normal'); });
+// Flag: we are programmatically blurring the input to go to ring, ignore the blur event
+let suppressInputBlur = false;
 
-taskInput.addEventListener('keydown', e => {
-  if (e.key === 'Enter') {
-    const val = taskInput.value.trim();
-    if (val) {
-      addTask(val);
-      taskInput.value = '';
-      taskInput.blur();
-      setMode('normal');
-    }
-  } else if (e.key === 'Escape') {
-    taskInput.value = ''; taskInput.blur(); setMode('normal');
-  } else if (e.key === 'Tab') {
-    e.preventDefault();
-    if (tasks.length > 0) {
-      taskInput.blur();
-      if (selectedIdx < 0) selectedIdx = 0;
-      setMode('ring');
-    }
-  }
+function goToRing() {
+  if (tasks.length === 0) return;
+  suppressInputBlur = true;
+  taskInput.blur();
+  suppressInputBlur = false;
+  if (selectedIdx < 0) selectedIdx = 0;
+  setMode('ring');
+}
+
+function goToInput() {
+  // When ring→input, we call taskInput.focus() which triggers the focus handler
+  // which sets mode='adding'. That's correct. No suppression needed.
+  setMode('adding'); // set before focus so focus handler is consistent
+  taskInput.focus();
+}
+
+taskInput.addEventListener('focus', () => {
+  // Only update mode if we aren't mid-tab-suppression
+  if (!suppressInputBlur) setMode('adding');
+});
+taskInput.addEventListener('blur', () => {
+  if (suppressInputBlur) return; // programmatic blur for ring nav, ignore
+  // User clicked away or pressed Escape etc
+  if (mode === 'adding') setMode('normal');
 });
 
-// Edit input in task box
-const taskBoxEdit = document.getElementById('task-box-edit');
+// taskInput key handler — only Tab/Enter/Escape
+taskInput.addEventListener('keydown', e => {
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    e.stopPropagation(); // prevent global handler seeing it
+    goToRing();
+  } else if (e.key === 'Enter') {
+    const val = taskInput.value.trim();
+    if (val) { addTask(val); taskInput.value = ''; }
+    suppressInputBlur = true;
+    taskInput.blur();
+    suppressInputBlur = false;
+    setMode('normal');
+  } else if (e.key === 'Escape') {
+    taskInput.value = '';
+    suppressInputBlur = true;
+    taskInput.blur();
+    suppressInputBlur = false;
+    setMode('normal');
+  }
+}, true); // capture phase so stopPropagation reliably blocks global
+
+// taskBoxEdit handlers
 taskBoxEdit.addEventListener('keydown', e => {
   if (e.key === 'Enter') { e.stopPropagation(); commitEdit(selectedIdx); }
-  else if (e.key === 'Escape') { e.stopPropagation(); tasks[selectedIdx].editing = false; setMode('ring'); }
+  else if (e.key === 'Escape') { e.stopPropagation(); if(tasks[selectedIdx]) tasks[selectedIdx].editing=false; setMode('ring'); }
 });
 taskBoxEdit.addEventListener('blur', () => {
   if (mode === 'editing' && selectedIdx >= 0 && tasks[selectedIdx]?.editing) commitEdit(selectedIdx);
@@ -977,41 +886,39 @@ taskBoxEdit.addEventListener('blur', () => {
 // ─── GLOBAL KEY HANDLER ───────────────────────────────────────────────────────
 document.addEventListener('keydown', e => {
   const active = document.activeElement;
-  if (active === taskInput) return;
+  if (active === taskInput)   return; // taskInput capture handler takes precedence
   if (active === taskBoxEdit) return;
 
   switch (e.key) {
     case 'Tab':
       e.preventDefault();
-      if (mode === 'ring' || mode === 'normal') {
-        // Cycle: ring → input → ring
-        if (mode === 'ring') {
-          setMode('normal');
-          taskInput.focus();
-        } else if (tasks.length > 0) {
-          if (selectedIdx < 0) selectedIdx = 0;
-          setMode('ring');
-        }
+      // Cycle: ring ↔ input
+      if (mode === 'ring') {
+        goToInput();
+      } else if (tasks.length > 0) {
+        goToRing();
+      } else {
+        goToInput();
       }
       break;
 
     case 'n': case 'N':
       e.preventDefault();
-      setMode('normal');
-      taskInput.focus();
+      goToInput();
       break;
 
-    case 'ArrowDown': case 'j':
+    // RIGHT = next task (clockwise), LEFT = previous task (counter-clockwise)
+    case 'ArrowRight': case 'ArrowDown': case 'j':
       e.preventDefault();
-      if (tasks.length === 0) break;
-      if (mode !== 'ring') { setMode('ring'); if (selectedIdx < 0) selectedIdx = 0; break; }
+      if (!tasks.length) break;
+      if (mode !== 'ring') { if (selectedIdx<0) selectedIdx=0; setMode('ring'); break; }
       selectedIdx = (selectedIdx + 1) % tasks.length;
       break;
 
-    case 'ArrowUp': case 'k':
+    case 'ArrowLeft': case 'ArrowUp': case 'k':
       e.preventDefault();
-      if (tasks.length === 0) break;
-      if (mode !== 'ring') { setMode('ring'); if (selectedIdx < 0) selectedIdx = 0; break; }
+      if (!tasks.length) break;
+      if (mode !== 'ring') { if (selectedIdx<0) selectedIdx=0; setMode('ring'); break; }
       selectedIdx = (selectedIdx - 1 + tasks.length) % tasks.length;
       break;
 
@@ -1019,30 +926,61 @@ document.addEventListener('keydown', e => {
       e.preventDefault();
       if (mode === 'ring' && selectedIdx >= 0) completeTask(selectedIdx);
       break;
-
     case 'e': case 'E':
       if (mode === 'ring' && selectedIdx >= 0) startEditTask(selectedIdx);
       break;
-
     case 'Delete':
       if (mode === 'ring' && selectedIdx >= 0) deleteTask(selectedIdx);
       break;
-
     case 'Backspace':
       if (active === document.body && mode === 'ring' && selectedIdx >= 0) {
         e.preventDefault(); deleteTask(selectedIdx);
       }
       break;
-
     case 'Escape':
       if (mode === 'ring') { selectedIdx = -1; setMode('normal'); }
       break;
   }
 });
 
+// ─── EXPORT / IMPORT ─────────────────────────────────────────────────────────
+function exportTasks() {
+  if (!tasks.length) { showToast('No missions to export'); return; }
+  const blob = new Blob([JSON.stringify({ version:1, exported:new Date().toISOString(), tasks }, null, 2)], { type:'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download=`orbit-missions-${new Date().toISOString().slice(0,10)}.json`;
+  a.click(); URL.revokeObjectURL(url);
+  showToast('Missions exported 💾');
+}
+function importTasks(event) {
+  const file = event.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      const imported = Array.isArray(data) ? data : (data.tasks || []);
+      if (!Array.isArray(imported)) throw new Error();
+      let added = 0;
+      imported.forEach(t => {
+        if (t.text && !tasks.find(x => x.text === t.text)) {
+          tasks.push({ text:t.text, done:!!t.done, id:t.id||Date.now()+added });
+          added++;
+        }
+      });
+      save();
+      if (added > 0) {
+        if (selectedIdx < 0 && tasks.length > 0) selectedIdx = 0;
+        showToast(`${added} mission${added>1?'s':''} imported 🚀`);
+        burst(window.innerWidth/2, window.innerHeight*0.5, '#b060ff', 14);
+      } else { showToast('No new missions found'); }
+    } catch { showToast('Import failed — invalid file'); }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
 // ─── INIT ─────────────────────────────────────────────────────────────────────
-if (tasks.length > 0) { selectedIdx = 0; }
-// Kick off - focus input
+if (tasks.length > 0) selectedIdx = 0;
 taskInput.focus();
 </script>
 </body>
