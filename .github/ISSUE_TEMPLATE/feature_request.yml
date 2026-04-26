@@ -9,12 +9,4 @@ body:
       label: "Description"
       placeholder: "What feature would you like and why?"
     validations:
-      required: true
-
-  - type: textarea
-    id: context
-    attributes:
-      label: "Additional context"
-      placeholder: "Mockups, examples, or any other details"
-    validations:
       required: false

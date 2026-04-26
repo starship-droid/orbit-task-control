@@ -9,12 +9,4 @@ body:
       label: "Description"
       placeholder: "What happened and what did you expect?"
     validations:
-      required: true
-
-  - type: textarea
-    id: context
-    attributes:
-      label: "Additional context"
-      placeholder: "Screenshots, steps to reproduce, or any other details"
-    validations:
       required: false
