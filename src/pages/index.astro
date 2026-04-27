@@ -1,17 +1,189 @@
 ---
-
+import '../styles/global.css';
 ---
 
 <html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ORBIT — Task Control</title>
+<meta name="description" content="ORBIT: Personal Task Control. A sleek sci-fi task management app with keyboard shortcuts and real-time visual feedback.">
+<meta property="og:title" content="ORBIT — Task Control">
+<meta property="og:description" content="Personal Task Control — Alpha Station. Manage your missions with sci-fi style.">
+<meta property="og:image" content="https://orbit-control.sophieallen.space/orbit-preview-100.png">
+<meta property="og:type" content="website">
+<meta name="twitter:image" content="https://orbit-control.sophieallen.space/orbit-preview-100.png">
+<link rel="icon" type="image/svg+xml" href="/orbit-control.svg">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div id="cosmos"></div>
+<canvas id="starfield"></canvas>
+<div id="scanlines"></div>
+<div id="hud-bar">
+  <div id="mode-indicator">ORBIT CONTROL</div>
+  <button id="settings-btn" title="Settings" aria-label="Settings">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+    </svg>
+  </button>
+</div>
+
+<!-- Settings modal -->
+<div id="settings-modal" class="glass-panel">
+  <div class="corner tl"></div><div class="corner tr"></div>
+  <div class="corner bl"></div><div class="corner br"></div>
+  <div id="settings-inner">
+    <div>
+      <div class="s-title">Data Management</div>
+      <div class="s-row">
+        <button id="export-btn" class="s-btn">⬇ Export JSON</button>
+        <button id="import-btn" class="s-btn purple">⬆ Import JSON</button>
+      </div>
+      <input type="file" id="import-file" accept=".json" style="display:none"/>
+    </div>
+    <div class="s-divider"></div>
+    <div>
+      <div class="s-title">Project</div>
+      <a class="s-github" href="https://github.com/starship-droid/orbit-task-control" target="_blank" rel="noopener">starship-droid/orbit-task-control</a>
+      <div class="s-version">v0.1.0</div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<div id="app">
+  <div id="header">
+    <div id="logo">ORBIT</div>
+    <div id="tagline">// Personal Task Control — Alpha Station</div>
+  </div>
+
+  <div class="glass-panel" id="input-panel">
+    <div class="corner tl"></div><div class="corner tr"></div>
+    <div class="corner bl"></div><div class="corner br"></div>
+    <div id="input-row">
+      <span style="color:var(--glow-purple);font-size:1rem;opacity:0.7;flex-shrink:0">+</span>
+      <input id="task-input" type="text" placeholder="New mission directive…" autocomplete="off" spellcheck="false">
+      <div id="input-hint">ENTER · TAB</div>
+    </div>
+  </div>
+
+  <div id="view-container">
+
+    <!-- SATURN VIEW -->
+    <div class="view active" id="saturn-view">
+      <svg id="saturn-canvas" viewBox="0 0 700 460" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <!-- Fully opaque saturn so tasks behind it are hidden -->
+          <radialGradient id="saturnGrad" cx="42%" cy="38%" r="60%">
+            <stop offset="0%"   stop-color="#d0a8ff" stop-opacity="1"/>
+            <stop offset="28%"  stop-color="#8040d8" stop-opacity="1"/>
+            <stop offset="62%"  stop-color="#2e1898" stop-opacity="1"/>
+            <stop offset="100%" stop-color="#0c0828" stop-opacity="1"/>
+          </radialGradient>
+          <radialGradient id="saturnRim" cx="50%" cy="50%" r="50%">
+            <stop offset="65%"  stop-color="transparent"/>
+            <stop offset="86%"  stop-color="rgba(50,25,130,0.7)"/>
+            <stop offset="100%" stop-color="rgba(15,8,60,0.97)"/>
+          </radialGradient>
+          <clipPath id="saturnBodyClip">
+            <ellipse cx="350" cy="230" rx="115" ry="108"/>
+          </clipPath>
+          <!-- Ring clips: top half behind, bottom half in front -->
+          <clipPath id="ringBehindClip"><rect x="0" y="0"   width="700" height="230"/></clipPath>
+          <clipPath id="ringFrontClip"> <rect x="0" y="230" width="700" height="230"/></clipPath>
+          <filter id="taskGlow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="3" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <filter id="selectedGlow" x="-80%" y="-80%" width="260%" height="260%">
+            <feGaussianBlur stdDeviation="6" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+
+        <!-- 1. Ring behind (top half) -->
+        <g id="ring-behind" clip-path="url(#ringBehindClip)"></g>
+        <!-- 2. Tasks behind saturn (very dim, drawn before the opaque body) -->
+        <g id="tasks-behind"></g>
+        <!-- 3. Saturn body — fully opaque, covers tasks-behind -->
+        <ellipse cx="350" cy="230" rx="115" ry="108" fill="url(#saturnGrad)"/>
+        <ellipse cx="350" cy="208" rx="108" ry="17" fill="rgba(190,130,255,0.10)" clip-path="url(#saturnBodyClip)"/>
+        <ellipse cx="350" cy="228" rx="112" ry="13" fill="rgba(100,60,200,0.12)"  clip-path="url(#saturnBodyClip)"/>
+        <ellipse cx="350" cy="248" rx="108" ry="11" fill="rgba(140,80,255,0.07)"  clip-path="url(#saturnBodyClip)"/>
+        <ellipse cx="350" cy="230" rx="115" ry="108" fill="url(#saturnRim)"/>
+        <ellipse cx="322" cy="203" rx="26" ry="18" fill="rgba(230,210,255,0.12)"/>
+        <ellipse cx="313" cy="196" rx="10" ry="7"  fill="rgba(255,255,255,0.08)"/>
+        <!-- 4. Ring front (bottom half) -->
+        <g id="ring-front" clip-path="url(#ringFrontClip)"></g>
+        <!-- 5. Tasks in front (full brightness) -->
+        <g id="tasks-front"></g>
+
+        <g id="empty-svg-state">
+          <text x="350" y="222" text-anchor="middle" font-family="Space Mono,monospace" font-size="10" fill="rgba(120,100,180,0.5)" letter-spacing="2">NO MISSIONS</text>
+          <text x="350" y="240" text-anchor="middle" font-family="Space Mono,monospace" font-size="9"  fill="rgba(100,80,160,0.4)"  letter-spacing="1">TYPE ABOVE · ENTER</text>
+        </g>
+      </svg>
+
+      <div id="task-label-overlay">
+        <div id="selected-task-box">
+          <div class="corner tl"></div><div class="corner tr"></div>
+          <div class="corner bl"></div><div class="corner br"></div>
+          <div id="task-box-label">ACTIVE MISSION</div>
+          <div id="task-box-text"></div>
+          <input id="task-box-edit" type="text" autocomplete="off" spellcheck="false"/>
+          <div id="task-box-meta"></div>
+          <div id="task-box-subtasks"></div>
+          <div id="task-box-sub-hint"></div>
+        </div>
+      </div>
+
+      <div class="view-badge">SHIFT+TAB → LIST VIEW</div>
+    </div>
+
+    <!-- LIST VIEW -->
+    <div class="view offright" id="list-view">
+      <div class="glass-panel" id="list-panel">
+        <div class="corner tl"></div><div class="corner tr"></div>
+        <div class="corner bl"></div><div class="corner br"></div>
+        <div id="list-header">
+          <div id="list-label">Active Missions</div>
+          <div id="task-count">0 / 0 done</div>
+        </div>
+        <div id="list-scroll">
+          <div id="sel-highlight"></div>
+          <div id="list-empty">
+            <div id="list-empty-icon">🛸</div>
+            <p>No missions logged.<br>TYPE a task above and press ENTER</p>
+          </div>
+          <div id="task-list"></div>
+        </div>
+        <div class="view-badge" style="padding:8px 0;">SHIFT+TAB → SATURN VIEW</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Shortcuts -->
+  <div class="glass-panel" id="shortcuts-panel">
+    <div class="corner tl"></div><div class="corner tr"></div>
+    <div class="corner bl"></div><div class="corner br"></div>
+    <div class="shortcut"><span class="key">TAB</span> Switch focus</div>
+    <div class="shortcut"><span class="key">↑↓←→</span> Navigate</div>
+    <div class="shortcut"><span class="key">Space</span> Complete</div>
+    <div class="shortcut"><span class="key">E</span> Edit</div>
+    <div class="shortcut"><span class="key">Del</span> Delete</div>
+    <div class="shortcut"><span class="key">N</span> New</div>
+    <div class="shortcut"><span class="key">⇧TAB</span> Toggle view</div>
+    <div class="shortcut"><span class="key">^N</span> Add subtask</div>
+  </div>
+</div>
+
+<script>
+  import '../js/main.js';
+</script>
+</body>
 </html>
