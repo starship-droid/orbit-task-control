@@ -78,6 +78,8 @@ document.addEventListener('keydown', e => {
     return;
   }
 
+  const isSaturn = state.currentView === 'saturn';
+
   switch (e.key) {
     case 'Tab':
       e.preventDefault();
@@ -85,27 +87,123 @@ document.addEventListener('keydown', e => {
       break;
     case 'n': case 'N': e.preventDefault(); goToInput(); break;
 
-    case 'ArrowRight': case 'ArrowDown': case 'j':
+    // ── j: next task (saturn) / down (list) ──────────────────────────────────
+    case 'j': {
       e.preventDefault();
       if (!state.tasks.length) break;
-      if (state.currentView === 'list') { state.selectedIdx = state.selectedIdx < 0 ? 0 : Math.min(state.tasks.length - 1, state.selectedIdx + 1); if (state.mode !== 'ring') setMode('ring'); moveHighlight(); break; }
-      if (state.mode !== 'ring') { if (state.selectedIdx < 0) state.selectedIdx = 0; setMode('ring'); break; }
-      state.selectedIdx = (state.selectedIdx + 1) % state.tasks.length; break;
+      if (isSaturn) {
+        if (state.mode !== 'ring') { if (state.selectedIdx < 0) state.selectedIdx = 0; setMode('ring'); break; }
+        state.selectedIdx = (state.selectedIdx + 1) % state.tasks.length;
+        state.selectedSubIdx = -1;
+      } else {
+        if (state.mode !== 'ring') { if (state.selectedIdx < 0) state.selectedIdx = 0; state.selectedSubIdx = -1; setMode('ring'); moveHighlight(); break; }
+        const subs = state.tasks[state.selectedIdx]?.subtasks || [];
+        if (state.selectedSubIdx < subs.length - 1) state.selectedSubIdx++;
+        else if (state.selectedIdx < state.tasks.length - 1) { state.selectedIdx++; state.selectedSubIdx = -1; }
+        moveHighlight();
+      }
+      break;
+    }
 
-    case 'ArrowLeft': case 'ArrowUp': case 'k':
+    // ── k: prev task (saturn) / up (list) ────────────────────────────────────
+    case 'k': {
       e.preventDefault();
       if (!state.tasks.length) break;
-      if (state.currentView === 'list') { state.selectedIdx = state.selectedIdx < 0 ? 0 : Math.max(0, state.selectedIdx - 1); if (state.mode !== 'ring') setMode('ring'); moveHighlight(); break; }
-      if (state.mode !== 'ring') { if (state.selectedIdx < 0) state.selectedIdx = 0; setMode('ring'); break; }
-      state.selectedIdx = (state.selectedIdx - 1 + state.tasks.length) % state.tasks.length; break;
+      if (isSaturn) {
+        if (state.mode !== 'ring') { if (state.selectedIdx < 0) state.selectedIdx = 0; setMode('ring'); break; }
+        state.selectedIdx = (state.selectedIdx - 1 + state.tasks.length) % state.tasks.length;
+        state.selectedSubIdx = -1;
+      } else {
+        if (state.mode !== 'ring') { if (state.selectedIdx < 0) state.selectedIdx = 0; state.selectedSubIdx = -1; setMode('ring'); moveHighlight(); break; }
+        if (state.selectedSubIdx > -1) state.selectedSubIdx--;
+        else if (state.selectedIdx > 0) { state.selectedIdx--; state.selectedSubIdx = (state.tasks[state.selectedIdx]?.subtasks?.length || 0) - 1; }
+        moveHighlight();
+      }
+      break;
+    }
 
-    case ' ': e.preventDefault(); if (state.selectedIdx >= 0) completeTask(state.selectedIdx); break;
-    case 'e': case 'E': if (state.selectedIdx >= 0) startEditTask(state.selectedIdx); break;
-    case 'Delete': if (state.selectedIdx >= 0) deleteTask(state.selectedIdx); break;
-    case 'Backspace': if (active === document.body && state.selectedIdx >= 0) { e.preventDefault(); deleteTask(state.selectedIdx); } break;
+    // ── Arrow Left: next task (saturn, flipped) ───────────────────────────────
+    case 'ArrowLeft': {
+      e.preventDefault();
+      if (!state.tasks.length || !isSaturn) break;
+      if (state.mode !== 'ring') { if (state.selectedIdx < 0) state.selectedIdx = 0; setMode('ring'); break; }
+      state.selectedIdx = (state.selectedIdx + 1) % state.tasks.length;
+      state.selectedSubIdx = -1;
+      break;
+    }
+
+    // ── Arrow Right: prev task (saturn, flipped) ──────────────────────────────
+    case 'ArrowRight': {
+      e.preventDefault();
+      if (!state.tasks.length || !isSaturn) break;
+      if (state.mode !== 'ring') { if (state.selectedIdx < 0) state.selectedIdx = 0; setMode('ring'); break; }
+      state.selectedIdx = (state.selectedIdx - 1 + state.tasks.length) % state.tasks.length;
+      state.selectedSubIdx = -1;
+      break;
+    }
+
+    // ── Arrow Down: next subtask (saturn, clamped) / next item (list) ──────────
+    case 'ArrowDown': {
+      e.preventDefault();
+      if (!state.tasks.length) break;
+      if (isSaturn) {
+        if (state.mode !== 'ring') { if (state.selectedIdx < 0) state.selectedIdx = 0; setMode('ring'); break; }
+        const subs = state.tasks[state.selectedIdx]?.subtasks || [];
+        if (state.selectedSubIdx < subs.length - 1) state.selectedSubIdx++;
+      } else {
+        if (state.mode !== 'ring') { if (state.selectedIdx < 0) state.selectedIdx = 0; state.selectedSubIdx = -1; setMode('ring'); moveHighlight(); break; }
+        const subs = state.tasks[state.selectedIdx]?.subtasks || [];
+        if (state.selectedSubIdx < subs.length - 1) state.selectedSubIdx++;
+        else if (state.selectedIdx < state.tasks.length - 1) { state.selectedIdx++; state.selectedSubIdx = -1; }
+        moveHighlight();
+      }
+      break;
+    }
+
+    // ── Arrow Up: prev subtask (saturn, clamped) / prev item (list) ────────────
+    case 'ArrowUp': {
+      e.preventDefault();
+      if (!state.tasks.length) break;
+      if (isSaturn) {
+        if (state.mode !== 'ring') { if (state.selectedIdx < 0) state.selectedIdx = 0; setMode('ring'); break; }
+        if (state.selectedSubIdx > -1) state.selectedSubIdx--;
+      } else {
+        if (state.mode !== 'ring') { if (state.selectedIdx < 0) state.selectedIdx = 0; state.selectedSubIdx = -1; setMode('ring'); moveHighlight(); break; }
+        if (state.selectedSubIdx > -1) state.selectedSubIdx--;
+        else if (state.selectedIdx > 0) { state.selectedIdx--; state.selectedSubIdx = (state.tasks[state.selectedIdx]?.subtasks?.length || 0) - 1; }
+        moveHighlight();
+      }
+      break;
+    }
+
+    case ' ':
+      e.preventDefault();
+      if (state.selectedIdx >= 0) {
+        if (state.selectedSubIdx >= 0) completeSubtask(state.selectedIdx, state.selectedSubIdx);
+        else completeTask(state.selectedIdx);
+      }
+      break;
+
+    case 'e': case 'E':
+      if (state.selectedIdx >= 0 && state.selectedSubIdx < 0) startEditTask(state.selectedIdx);
+      break;
+
+    case 'Delete':
+      if (state.selectedIdx >= 0 && state.selectedSubIdx < 0) deleteTask(state.selectedIdx);
+      break;
+
+    case 'Backspace':
+      if (active === document.body && state.selectedIdx >= 0 && state.selectedSubIdx < 0) {
+        e.preventDefault(); deleteTask(state.selectedIdx);
+      }
+      break;
+
     case 'Escape':
       if (isSettingsOpen()) { toggleSettings(); break; }
-      if (state.mode === 'ring') { state.selectedIdx = -1; setMode('normal'); }
+      if (state.mode === 'ring') {
+        state.selectedIdx = -1; state.selectedSubIdx = -1; setMode('normal');
+        if (!isSaturn) moveHighlight();
+      }
       break;
   }
 });

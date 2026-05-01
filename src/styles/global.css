@@ -65,6 +65,9 @@ html, body { height:100%; overflow:hidden; background:var(--void); color:var(--t
 #task-box-label { font-family:'Space Mono',monospace; font-size:0.48rem; letter-spacing:0.3em; color:var(--text-ghost); text-transform:uppercase; margin-bottom:4px; }
 #task-box-text { font-family:'Rajdhani',sans-serif; font-size:1.05rem; font-weight:600; color:var(--text-primary); letter-spacing:0.04em; line-height:1.3; word-break:break-word; }
 #task-box-meta { font-family:'Space Mono',monospace; font-size:0.48rem; color:var(--text-ghost); letter-spacing:0.15em; margin-top:4px; }
+#task-box-text { border-radius:3px; padding:1px 4px; transition:opacity 0.15s, box-shadow 0.15s; }
+#task-box-text.task-title-selected { background:rgba(77,201,255,0.08); box-shadow:0 0 0 1px rgba(77,201,255,0.28); }
+#task-box-text.task-title-dimmed { opacity:0.45; }
 #task-box-edit { background:transparent; border:none; outline:none; border-bottom:1px solid var(--glow-purple); font-family:'Rajdhani',sans-serif; font-size:1.05rem; font-weight:600; color:var(--text-primary); text-align:center; width:100%; caret-color:var(--glow-purple); display:none; }
 
 /* ── VIEW HINT ── */
@@ -118,15 +121,14 @@ html, body { height:100%; overflow:hidden; background:var(--void); color:var(--t
 
 /* ── SUBTASK STYLES ── */
 #task-box-subtasks { margin-top:7px; display:none; border-top:1px solid rgba(255,255,255,0.07); padding-top:6px; }
-.tbox-sub-item { display:flex; align-items:center; gap:7px; padding:3px 0; cursor:pointer; transition:opacity 0.2s; }
-.tbox-sub-item:hover { opacity:0.85; }
+.tbox-sub-item { display:flex; align-items:center; gap:7px; padding:3px 4px; border-radius:3px; transition:opacity 0.2s; }
+.tbox-sub-item.selected { background:rgba(77,201,255,0.10); box-shadow:0 0 0 1px rgba(77,201,255,0.3); }
 .tbox-sub-check { width:10px; height:10px; border:1px solid rgba(120,160,220,0.4); border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:0.42rem; color:var(--glow-teal); transition:all 0.25s; }
 .tbox-sub-check.done { background:rgba(0,255,204,0.18); border-color:var(--glow-teal); box-shadow:0 0 5px rgba(0,255,204,0.4); }
 .tbox-sub-text { font-family:'Rajdhani',sans-serif; font-size:0.80rem; font-weight:400; color:rgba(255,255,255,0.72); flex:1; text-align:left; line-height:1.2; }
 .tbox-sub-text.done { text-decoration:line-through; color:var(--text-dim); text-decoration-color:var(--glow-teal); }
 #task-box-sub-hint { font-family:'Space Mono',monospace; font-size:0.42rem; color:rgba(120,160,220,0.3); letter-spacing:0.1em; margin-top:5px; display:none; text-align:center; }
-.subtask-row { display:flex; align-items:center; gap:10px; padding:5px 12px 5px 44px; cursor:pointer; position:relative; z-index:1; transition:opacity 0.2s; }
-.subtask-row:hover { opacity:0.8; }
+.subtask-row { display:flex; align-items:center; gap:10px; padding:5px 12px 5px 44px; position:relative; z-index:1; transition:opacity 0.2s; }
 .subtask-row.done .subtask-text { text-decoration:line-through; color:var(--text-dim); text-decoration-color:var(--glow-teal); }
 .subtask-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; background:rgba(120,160,220,0.35); border:1px solid rgba(120,160,220,0.5); transition:all 0.25s; }
 .subtask-row.done .subtask-dot { background:rgba(0,255,204,0.3); border-color:var(--glow-teal); box-shadow:0 0 5px rgba(0,255,204,0.4); }

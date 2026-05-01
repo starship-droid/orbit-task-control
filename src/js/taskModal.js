@@ -27,6 +27,7 @@ export function setMode(m) {
 
 // ─── VIEW TOGGLE ─────────────────────────────────────────────────────────────
 export function toggleView() {
+  state.selectedSubIdx = -1;
   const sv = document.getElementById('saturn-view'), lv = document.getElementById('list-view');
   if (state.currentView === 'saturn') {
     sv.className = 'view offleft'; lv.className = 'view active';
@@ -81,6 +82,9 @@ export function updateTaskBox() {
       textEl.style.display = 'block'; editEl.style.display = 'none'; textEl.textContent = task.text;
       const done = state.tasks.filter(t => t.done).length;
       const subs = task.subtasks || [];
+      const hasSubs = subs.length > 0;
+      textEl.classList.toggle('task-title-selected', hasSubs && state.selectedSubIdx < 0);
+      textEl.classList.toggle('task-title-dimmed', hasSubs && state.selectedSubIdx >= 0);
       const subDone = subs.filter(s => s.done).length;
       metaEl.textContent = `MISSION ${state.selectedIdx + 1} / ${state.tasks.length} · ${done} COMPLETE`;
       lblEl.textContent = task.done ? 'MISSION COMPLETE' : 'ACTIVE MISSION';
@@ -88,26 +92,25 @@ export function updateTaskBox() {
       box.style.borderColor = col.fill + '99';
       box.style.boxShadow = `0 0 28px ${col.glow.replace('0.8', '0.2')},0 0 0 1px ${col.fill}22 inset`;
 
-      // Subtask list — only rebuild when content changes
-      const subsKey = JSON.stringify(subs);
+      // Subtask list — rebuild when content or selection changes
+      const subsKey = JSON.stringify(subs) + '|' + state.selectedSubIdx;
       if (subDiv.dataset.key !== subsKey) {
         subDiv.dataset.key = subsKey;
         subDiv.innerHTML = '';
         if (subs.length > 0) {
           subs.forEach((sub, j) => {
-            const row = document.createElement('div'); row.className = 'tbox-sub-item';
+            const row = document.createElement('div'); row.className = 'tbox-sub-item' + (j === state.selectedSubIdx ? ' selected' : '');
             const ck = document.createElement('div'); ck.className = 'tbox-sub-check' + (sub.done ? ' done' : '');
             if (sub.done) ck.textContent = '✓';
             const tx = document.createElement('div'); tx.className = 'tbox-sub-text' + (sub.done ? ' done' : ''); tx.textContent = sub.text;
             row.append(ck, tx);
-            row.addEventListener('click', () => completeSubtask(state.selectedIdx, j));
             subDiv.appendChild(row);
           });
         }
       }
       subDiv.style.display = subs.length > 0 ? 'block' : 'none';
       subHint.style.display = 'block';
-      subHint.textContent = subs.length > 0 ? `${subDone}/${subs.length} SUBTASKS · ^N ADD  ·  Del REMOVE` : 'Ctrl+N  ADD SUBTASK';
+      subHint.textContent = subs.length > 0 ? `${subDone}/${subs.length} SUBTASKS · ↑↓ NAV · Space DONE · ^N ADD` : 'Ctrl+N  ADD SUBTASK';
     }
     textEl.style.textDecoration = task.done ? 'line-through' : 'none';
     textEl.style.color = task.done ? 'rgba(0,255,204,0.7)' : '';
@@ -146,8 +149,8 @@ export function renderList() {
     }
     el.addEventListener('click', () => {
       if (state.mode === 'adding' || state.mode === 'adding-sub') return;
-      if (state.selectedIdx === i) completeTask(i);
-      else { state.selectedIdx = i; moveHighlight(); }
+      if (state.selectedIdx === i && state.selectedSubIdx < 0) completeTask(i);
+      else { state.selectedIdx = i; state.selectedSubIdx = -1; moveHighlight(); }
     });
     list.appendChild(el);
 
@@ -156,11 +159,12 @@ export function renderList() {
     subs.forEach((sub, j) => {
       const sr = document.createElement('div');
       sr.className = `subtask-row${sub.done ? ' done' : ''}`;
+      sr.dataset.taskIdx = i;
+      sr.dataset.subIdx = j;
       const connector = document.createElement('div'); connector.className = 'subtask-connector';
       const sdot = document.createElement('div'); sdot.className = 'subtask-dot';
       const stx = document.createElement('div'); stx.className = 'subtask-text'; stx.textContent = sub.text;
       sr.append(connector, sdot, stx);
-      sr.addEventListener('click', e => { e.stopPropagation(); completeSubtask(i, j); });
       list.appendChild(sr);
     });
   });
@@ -169,9 +173,15 @@ export function renderList() {
 
 export function moveHighlight() {
   const hl = document.getElementById('sel-highlight'), list = document.getElementById('task-list');
-  const items = list.querySelectorAll(':scope > .task-item');
-  if (state.selectedIdx < 0 || !items.length || !items[state.selectedIdx]) { hl.style.opacity = '0'; return; }
-  const item = items[state.selectedIdx];
+  if (state.selectedIdx < 0) { hl.style.opacity = '0'; return; }
+  let item;
+  if (state.selectedSubIdx >= 0) {
+    item = list.querySelector(`.subtask-row[data-task-idx="${state.selectedIdx}"][data-sub-idx="${state.selectedSubIdx}"]`);
+  } else {
+    const items = list.querySelectorAll(':scope > .task-item');
+    item = items[state.selectedIdx];
+  }
+  if (!item) { hl.style.opacity = '0'; return; }
   hl.style.top = item.offsetTop + 'px'; hl.style.height = item.offsetHeight + 'px'; hl.style.opacity = '1';
   item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 }
@@ -223,6 +233,7 @@ export function deleteTask(idx) {
   if (idx < 0 || idx >= state.tasks.length) return;
   burst(innerWidth / 2, innerHeight * 0.5, '#ff4d6d', 10);
   state.tasks.splice(idx, 1);
+  state.selectedSubIdx = -1;
   if (state.selectedIdx >= state.tasks.length) state.selectedIdx = Math.max(0, state.tasks.length - 1);
   if (state.tasks.length === 0) { state.selectedIdx = -1; setMode('normal'); }
   showToast('Mission scrubbed ✕'); save();

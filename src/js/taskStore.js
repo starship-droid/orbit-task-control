@@ -12,6 +12,7 @@ export const TASK_COLORS = [
 export const state = {
   tasks: JSON.parse(localStorage.getItem('orbit-tasks') || '[]'),
   selectedIdx: -1,
+  selectedSubIdx: -1,
   mode: 'normal',
   currentView: 'saturn',
   addingSubtaskFor: -1,
