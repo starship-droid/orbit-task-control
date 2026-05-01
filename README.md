@@ -1,6 +1,6 @@
 # Orbit Task Control
 
-**Version:** v0.1.0
+**Version:** v0.2.0
 
 A space-themed personal task manager built for focus and clarity — especially for ADHD brains that need a mission control, not a to-do list.
 
@@ -9,11 +9,23 @@ A space-themed personal task manager built for focus and clarity — especially 
 - Add, complete, and delete tasks
 - Subtask support
 - Export / import tasks as JSON
-- Single-file app — no install, no backend
+- Built with Astro
 
 ## Usage
 
-Open `index.html` in a browser. That's it.
+```bash
+npm install
+npm run dev
+```
+
+Then open [localhost:4321](http://localhost:4321) in your browser.
+
+## Build
+
+```bash
+npm run build
+npm run preview
+```
 
 ## Links
 
