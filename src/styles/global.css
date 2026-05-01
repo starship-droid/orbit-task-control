@@ -65,6 +65,9 @@ html, body { height:100%; overflow:hidden; background:var(--void); color:var(--t
 #task-box-label { font-family:'Space Mono',monospace; font-size:0.48rem; letter-spacing:0.3em; color:var(--text-ghost); text-transform:uppercase; margin-bottom:4px; }
 #task-box-text { font-family:'Rajdhani',sans-serif; font-size:1.05rem; font-weight:600; color:var(--text-primary); letter-spacing:0.04em; line-height:1.3; word-break:break-word; }
 #task-box-meta { font-family:'Space Mono',monospace; font-size:0.48rem; color:var(--text-ghost); letter-spacing:0.15em; margin-top:4px; }
+#task-box-text { border-radius:3px; padding:1px 4px; transition:opacity 0.15s, box-shadow 0.15s; }
+#task-box-text.task-title-selected { background:rgba(77,201,255,0.08); box-shadow:0 0 0 1px rgba(77,201,255,0.28); }
+#task-box-text.task-title-dimmed { opacity:0.45; }
 #task-box-edit { background:transparent; border:none; outline:none; border-bottom:1px solid var(--glow-purple); font-family:'Rajdhani',sans-serif; font-size:1.05rem; font-weight:600; color:var(--text-primary); text-align:center; width:100%; caret-color:var(--glow-purple); display:none; }
 
 /* ── VIEW HINT ── */

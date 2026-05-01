@@ -80,6 +80,9 @@ export function updateTaskBox() {
       subDiv.style.display = 'none'; subHint.style.display = 'none';
     } else {
       textEl.style.display = 'block'; editEl.style.display = 'none'; textEl.textContent = task.text;
+      const hasSubs = subs.length > 0;
+      textEl.classList.toggle('task-title-selected', hasSubs && state.selectedSubIdx < 0);
+      textEl.classList.toggle('task-title-dimmed', hasSubs && state.selectedSubIdx >= 0);
       const done = state.tasks.filter(t => t.done).length;
       const subs = task.subtasks || [];
       const subDone = subs.filter(s => s.done).length;

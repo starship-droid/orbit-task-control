@@ -142,7 +142,7 @@ document.addEventListener('keydown', e => {
       break;
     }
 
-    // ── Arrow Down: next subtask (saturn) / next item (list) ─────────────────
+    // ── Arrow Down: next subtask (saturn, clamped) / next item (list) ──────────
     case 'ArrowDown': {
       e.preventDefault();
       if (!state.tasks.length) break;
@@ -150,7 +150,6 @@ document.addEventListener('keydown', e => {
         if (state.mode !== 'ring') { if (state.selectedIdx < 0) state.selectedIdx = 0; setMode('ring'); break; }
         const subs = state.tasks[state.selectedIdx]?.subtasks || [];
         if (state.selectedSubIdx < subs.length - 1) state.selectedSubIdx++;
-        else { state.selectedIdx = (state.selectedIdx + 1) % state.tasks.length; state.selectedSubIdx = -1; }
       } else {
         if (state.mode !== 'ring') { if (state.selectedIdx < 0) state.selectedIdx = 0; state.selectedSubIdx = -1; setMode('ring'); moveHighlight(); break; }
         const subs = state.tasks[state.selectedIdx]?.subtasks || [];
@@ -161,14 +160,13 @@ document.addEventListener('keydown', e => {
       break;
     }
 
-    // ── Arrow Up: prev subtask (saturn) / prev item (list) ───────────────────
+    // ── Arrow Up: prev subtask (saturn, clamped) / prev item (list) ────────────
     case 'ArrowUp': {
       e.preventDefault();
       if (!state.tasks.length) break;
       if (isSaturn) {
         if (state.mode !== 'ring') { if (state.selectedIdx < 0) state.selectedIdx = 0; setMode('ring'); break; }
         if (state.selectedSubIdx > -1) state.selectedSubIdx--;
-        else { state.selectedIdx = (state.selectedIdx - 1 + state.tasks.length) % state.tasks.length; state.selectedSubIdx = (state.tasks[state.selectedIdx]?.subtasks?.length || 0) - 1; }
       } else {
         if (state.mode !== 'ring') { if (state.selectedIdx < 0) state.selectedIdx = 0; state.selectedSubIdx = -1; setMode('ring'); moveHighlight(); break; }
         if (state.selectedSubIdx > -1) state.selectedSubIdx--;
