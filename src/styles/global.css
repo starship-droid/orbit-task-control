@@ -128,12 +128,13 @@ html, body { height:100%; overflow:hidden; background:var(--void); color:var(--t
 .tbox-sub-text { font-family:'Rajdhani',sans-serif; font-size:0.80rem; font-weight:400; color:rgba(255,255,255,0.72); flex:1; text-align:left; line-height:1.2; }
 .tbox-sub-text.done { text-decoration:line-through; color:var(--text-dim); text-decoration-color:var(--glow-teal); }
 #task-box-sub-hint { font-family:'Space Mono',monospace; font-size:0.42rem; color:rgba(120,160,220,0.3); letter-spacing:0.1em; margin-top:5px; display:none; text-align:center; }
-.subtask-row { display:flex; align-items:center; gap:10px; padding:5px 12px 5px 44px; position:relative; z-index:1; transition:opacity 0.2s; }
+.subtask-row { display:flex; align-items:center; gap:10px; padding:5px 12px 5px 96px; position:relative; z-index:1; transition:opacity 0.2s; }
 .subtask-row.done .subtask-text { text-decoration:line-through; color:var(--text-dim); text-decoration-color:var(--glow-teal); }
 .subtask-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; background:rgba(120,160,220,0.35); border:1px solid rgba(120,160,220,0.5); transition:all 0.25s; }
 .subtask-row.done .subtask-dot { background:rgba(0,255,204,0.3); border-color:var(--glow-teal); box-shadow:0 0 5px rgba(0,255,204,0.4); }
 .subtask-text { font-size:0.9rem; font-weight:400; color:rgba(255,255,255,0.65); flex:1; }
-.subtask-connector { position:absolute; left:29px; top:0; bottom:50%; width:1px; background:rgba(77,201,255,0.18); pointer-events:none; }
+.subtask-connector { position:absolute; left:22px; top:0; bottom:50%; width:1px; background:rgba(77,201,255,0.22); pointer-events:none; }
+.subtask-connector::after { content:''; position:absolute; bottom:0; left:0; width:74px; height:1px; background:rgba(77,201,255,0.15); }
 
 /* ── SETTINGS MODAL ── */
 #settings-modal { position:fixed; top:56px; right:12px; width:310px; z-index:55; opacity:0; transform:translateY(-10px) scale(0.97); pointer-events:none; transition:opacity 0.22s cubic-bezier(0.23,1,0.32,1),transform 0.22s cubic-bezier(0.23,1,0.32,1); }

@@ -1,6 +1,6 @@
 # Orbit Task Control
 
-**Version:** v0.2.0
+**Version:** v0.3.0
 
 A space-themed personal task manager built for focus and clarity — especially for ADHD brains that need a mission control, not a to-do list.
 
