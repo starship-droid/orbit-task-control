@@ -41,8 +41,12 @@ taskInput.addEventListener('keydown', e => {
   } else if (e.key === 'Enter') {
     const val = taskInput.value.trim();
     if (val) {
-      if (state.addingSubtaskFor >= 0) addSubtask(state.addingSubtaskFor, val);
-      else addTask(val);
+      if (state.addingSubtaskFor >= 0) {
+        addSubtask(state.addingSubtaskFor, val);
+        taskInput.value = '';
+        return; // stay in adding-sub mode so user can keep adding subtasks
+      }
+      addTask(val);
       taskInput.value = '';
     }
     resetInputToNormal(); suppressInputBlur = true; taskInput.blur(); suppressInputBlur = false; setMode('normal');
