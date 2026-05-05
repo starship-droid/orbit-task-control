@@ -51,7 +51,9 @@ taskInput.addEventListener('keydown', e => {
     }
     resetInputToNormal(); suppressInputBlur = true; taskInput.blur(); suppressInputBlur = false; setMode('normal');
   } else if (e.key === 'Escape') {
-    taskInput.value = ''; resetInputToNormal(); suppressInputBlur = true; taskInput.blur(); suppressInputBlur = false; setMode('normal');
+    taskInput.value = '';
+    if (state.addingSubtaskFor >= 0) { resetInputToNormal(); setMode('adding'); }
+    else { resetInputToNormal(); suppressInputBlur = true; taskInput.blur(); suppressInputBlur = false; setMode('normal'); }
   }
 }, true);
 
