@@ -86,7 +86,8 @@ export function updateTaskBox() {
       textEl.classList.toggle('task-title-selected', hasSubs && state.selectedSubIdx < 0);
       textEl.classList.toggle('task-title-dimmed', hasSubs && state.selectedSubIdx >= 0);
       const subDone = subs.filter(s => s.done).length;
-      metaEl.textContent = `MISSION ${state.selectedIdx + 1} / ${state.tasks.length} · ${done} COMPLETE`;
+      const st = task.status || 'todo';
+      metaEl.innerHTML = `MISSION ${state.selectedIdx + 1} / ${state.tasks.length} · ${done} COMPLETE<span class="task-box-status-badge" data-status="${st}">◈ ${STATUS_LABELS[st]}</span>`;
       lblEl.textContent = task.done ? 'MISSION COMPLETE' : 'ACTIVE MISSION';
       const col = TASK_COLORS[state.selectedIdx % TASK_COLORS.length];
       box.style.borderColor = col.fill + '99';
@@ -110,7 +111,7 @@ export function updateTaskBox() {
       }
       subDiv.style.display = subs.length > 0 ? 'block' : 'none';
       subHint.style.display = 'block';
-      subHint.textContent = subs.length > 0 ? `${subDone}/${subs.length} SUBTASKS · ↑↓ NAV · Space DONE · ^N ADD` : 'Ctrl+N  ADD SUBTASK';
+      subHint.textContent = subs.length > 0 ? `${subDone}/${subs.length} SUBTASKS · ↑↓ · Space · ^N ADD · P STATUS` : '^N ADD SUBTASK · P CYCLE STATUS';
     }
     textEl.style.textDecoration = task.done ? 'line-through' : 'none';
     textEl.style.color = task.done ? 'rgba(0,255,204,0.7)' : '';
@@ -120,23 +121,36 @@ export function updateTaskBox() {
   }
 }
 
-// ─── LIST RENDER ─────────────────────────────────────────────────────────────
+// ─── LIST RENDER (Kanban) ─────────────────────────────────────────────────────
 export function renderList() {
   const list = document.getElementById('task-list'), empty = document.getElementById('list-empty'), count = document.getElementById('task-count');
   const done = state.tasks.filter(t => t.done).length;
   count.textContent = `${done} / ${state.tasks.length} done`;
   empty.style.display = state.tasks.length === 0 ? 'flex' : 'none';
   list.innerHTML = '';
+  list.className = 'kanban';
+
+  const colBodies = {};
+  ['todo', 'inprogress', 'blocked'].forEach(status => {
+    const col = document.createElement('div'); col.className = 'kb-col';
+    const n = state.tasks.filter(t => (t.status || 'todo') === status).length;
+    const hdr = document.createElement('div'); hdr.className = `kb-col-header ${status}`;
+    hdr.innerHTML = `${STATUS_LABELS[status]} <span class="kb-count">${n}</span>`;
+    const body = document.createElement('div'); body.className = 'kb-col-body';
+    colBodies[status] = body;
+    col.append(hdr, body); list.appendChild(col);
+  });
+
   state.tasks.forEach((task, i) => {
+    const body = colBodies[task.status || 'todo'];
     const el = document.createElement('div');
     el.className = `task-item${task.done ? ' done' : ''}`;
     el.dataset.idx = i;
     const check = document.createElement('div'); check.className = 'task-check';
     const num = document.createElement('div'); num.className = 'task-num'; num.textContent = String(i + 1).padStart(2, '0');
-    const dot = document.createElement('div'); dot.className = `task-priority ${COLORS[i % 3]}`;
     if (task.editing) {
       const inp = document.createElement('input'); inp.className = 'task-edit-input'; inp.value = task.text; inp.type = 'text';
-      el.append(check, num, dot, inp); list.appendChild(el);
+      el.append(check, num, inp); body.appendChild(el);
       requestAnimationFrame(() => { inp.focus(); inp.selectionStart = inp.value.length; });
       inp.addEventListener('keydown', e => {
         if (e.key === 'Enter') { e.stopPropagation(); task.text = inp.value.trim() || task.text; task.editing = false; setMode('normal'); save(); renderList(); showToast('Mission updated ✎'); }
@@ -145,27 +159,22 @@ export function renderList() {
       inp.addEventListener('blur', () => { if (task.editing) { task.text = inp.value.trim() || task.text; task.editing = false; setMode('normal'); save(); renderList(); } });
     } else {
       const text = document.createElement('div'); text.className = 'task-text'; text.textContent = task.text;
-      el.append(check, num, dot, text);
+      el.append(check, num, text);
     }
     el.addEventListener('click', () => {
       if (state.mode === 'adding' || state.mode === 'adding-sub') return;
       if (state.selectedIdx === i && state.selectedSubIdx < 0) completeTask(i);
       else { state.selectedIdx = i; state.selectedSubIdx = -1; moveHighlight(); }
     });
-    list.appendChild(el);
+    body.appendChild(el);
 
-    // Subtask rows beneath the parent task
-    const subs = task.subtasks || [];
-    subs.forEach((sub, j) => {
+    (task.subtasks || []).forEach((sub, j) => {
       const sr = document.createElement('div');
-      sr.className = `subtask-row${sub.done ? ' done' : ''}`;
-      sr.dataset.taskIdx = i;
-      sr.dataset.subIdx = j;
-      const connector = document.createElement('div'); connector.className = 'subtask-connector';
+      sr.className = `subtask-row kb-sub${sub.done ? ' done' : ''}`;
+      sr.dataset.taskIdx = i; sr.dataset.subIdx = j;
       const sdot = document.createElement('div'); sdot.className = 'subtask-dot';
       const stx = document.createElement('div'); stx.className = 'subtask-text'; stx.textContent = sub.text;
-      sr.append(connector, sdot, stx);
-      list.appendChild(sr);
+      sr.append(sdot, stx); body.appendChild(sr);
     });
   });
   requestAnimationFrame(() => requestAnimationFrame(moveHighlight));
@@ -173,6 +182,16 @@ export function renderList() {
 
 export function moveHighlight() {
   const hl = document.getElementById('sel-highlight'), list = document.getElementById('task-list');
+  // Kanban: use class-based highlight, hide the sliding bar
+  if (list.classList.contains('kanban')) {
+    hl.style.opacity = '0';
+    list.querySelectorAll('.task-item.kb-selected').forEach(el => el.classList.remove('kb-selected'));
+    if (state.selectedIdx >= 0) {
+      const item = list.querySelector(`.task-item[data-idx="${state.selectedIdx}"]`);
+      if (item) { item.classList.add('kb-selected'); item.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+    }
+    return;
+  }
   if (state.selectedIdx < 0) { hl.style.opacity = '0'; return; }
   let item;
   if (state.selectedSubIdx >= 0) {
@@ -186,11 +205,27 @@ export function moveHighlight() {
   item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 }
 
+// ─── STATUS ──────────────────────────────────────────────────────────────────
+const STATUS_CYCLE = ['todo', 'inprogress', 'blocked'];
+const STATUS_LABELS = { todo: 'TO DO', inprogress: 'IN PROGRESS', blocked: 'BLOCKED' };
+const STATUS_COLORS = { todo: '#4dc9ff', inprogress: '#00ffcc', blocked: '#ff5555' };
+
+export function cycleTaskStatus(idx) {
+  if (idx < 0 || idx >= state.tasks.length) return;
+  const task = state.tasks[idx];
+  const curr = STATUS_CYCLE.indexOf(task.status || 'todo');
+  task.status = STATUS_CYCLE[(curr + 1) % STATUS_CYCLE.length];
+  burst(innerWidth / 2, innerHeight * 0.5, STATUS_COLORS[task.status], 8);
+  showToast(`Status: ${STATUS_LABELS[task.status]}`);
+  save();
+  if (state.currentView === 'list') renderList();
+}
+
 // ─── ACTIONS ─────────────────────────────────────────────────────────────────
 export function addTask(text) {
   if (!text.trim()) return;
   const col = TASK_COLORS[state.tasks.length % TASK_COLORS.length];
-  state.tasks.push({ text: text.trim(), done: false, id: Date.now(), subtasks: [] });
+  state.tasks.push({ text: text.trim(), done: false, id: Date.now(), subtasks: [], status: 'todo' });
   const ni = state.tasks.length - 1;
   setNewTaskAnimating({ angle: (ni / state.tasks.length) * Math.PI * 2 + ringRotation, progress: 0, color: col });
   warpEffect(); burst(innerWidth / 2, innerHeight * 0.5, col.fill, 14);
@@ -276,7 +311,7 @@ export function importTasks(event) {
       const imported = Array.isArray(data) ? data : (data.tasks || []);
       if (!Array.isArray(imported)) throw new Error();
       let added = 0;
-      imported.forEach(t => { if (t.text && !state.tasks.find(x => x.text === t.text)) { state.tasks.push({ text: t.text, done: !!t.done, id: t.id || Date.now() + added, subtasks: (t.subtasks || []).map(s => ({ id: s.id || Date.now(), text: s.text || '', done: !!s.done })) }); added++; } });
+      imported.forEach(t => { if (t.text && !state.tasks.find(x => x.text === t.text)) { state.tasks.push({ text: t.text, done: !!t.done, id: t.id || Date.now() + added, subtasks: (t.subtasks || []).map(s => ({ id: s.id || Date.now(), text: s.text || '', done: !!s.done })), status: STATUS_CYCLE.includes(t.status) ? t.status : 'todo' }); added++; } });
       save();
       if (added > 0) { if (state.selectedIdx < 0 && state.tasks.length > 0) state.selectedIdx = 0; showToast(`${added} mission${added > 1 ? 's' : ''} imported 🚀`); burst(innerWidth / 2, innerHeight * 0.5, '#b060ff', 14); }
       else showToast('No new missions found');
