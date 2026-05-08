@@ -230,6 +230,16 @@ export function completeSubtask(parentIdx, subIdx) {
   if (state.currentView === 'list') renderList();
 }
 
+export function deleteSubtask(parentIdx, subIdx) {
+  const subs = state.tasks[parentIdx]?.subtasks;
+  if (!subs || subIdx < 0 || subIdx >= subs.length) return;
+  burst(innerWidth / 2, innerHeight * 0.5, '#ff4d6d', 6);
+  subs.splice(subIdx, 1);
+  state.selectedSubIdx = subs.length > 0 ? Math.min(subIdx, subs.length - 1) : -1;
+  showToast('Subtask scrubbed ✕'); save();
+  if (state.currentView === 'list') renderList();
+}
+
 export function deleteLastSubtask(parentIdx) {
   const subs = state.tasks[parentIdx]?.subtasks; if (!subs || !subs.length) return;
   subs.pop();
