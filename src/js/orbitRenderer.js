@@ -51,9 +51,8 @@ import { state, TASK_COLORS } from './taskStore.js';
 // ─── SATURN ENGINE ───────────────────────────────────────────────────────────
 const CX = 350, CY = 230, RING_TILT = -0.18, RING_PARTICLES = 26;
 const STATUS_RINGS = {
-  todo:       { rx: 262, ry: 66, col: 'rgba(77,201,255,'  },
-  inprogress: { rx: 205, ry: 51, col: 'rgba(0,255,204,'   },
-  blocked:    { rx: 152, ry: 38, col: 'rgba(255,80,80,'   },
+  todo:       { rx: 158, ry: 40, col: 'rgba(77,201,255,'  }, // inner — closest to saturn
+  inprogress: { rx: 222, ry: 56, col: 'rgba(0,255,204,'   }, // outer
 };
 const RING_RX = STATUS_RINGS.todo.rx; // default radius (used by ellipsePoint)
 const RING_RY = STATUS_RINGS.todo.ry;
