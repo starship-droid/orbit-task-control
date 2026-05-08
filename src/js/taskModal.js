@@ -136,7 +136,7 @@ export function renderList() {
     const num = document.createElement('div'); num.className = 'task-num'; num.textContent = String(i + 1).padStart(2, '0');
     const dot = document.createElement('div'); dot.className = `task-priority ${COLORS[i % 3]}`;
     const st = task.status || 'todo';
-    const badge = document.createElement('div'); badge.className = `task-status ${st}`; badge.textContent = STATUS_LABELS[st] || STATUS_LABELS.todo;
+    const badge = document.createElement('div'); badge.className = `task-status ${st}`; badge.title = STATUS_LABELS[st] || STATUS_LABELS.todo;
     if (task.editing) {
       const inp = document.createElement('input'); inp.className = 'task-edit-input'; inp.value = task.text; inp.type = 'text';
       el.append(check, num, dot, inp, badge); list.appendChild(el);
@@ -188,7 +188,7 @@ export function moveHighlight() {
 
 // ─── STATUS ──────────────────────────────────────────────────────────────────
 const STATUS_CYCLE = ['todo', 'inprogress'];
-const STATUS_LABELS = { todo: '○ STAGING', inprogress: '◉ EN ROUTE', blocked: '⊘ STALLED' };
+const STATUS_LABELS = { todo: 'STAGING', inprogress: 'EN ROUTE', blocked: 'STALLED' };
 const STATUS_COLORS = { todo: '#4dc9ff', inprogress: '#00ffcc', blocked: '#ff5555' };
 
 export function cycleTaskStatus(idx) {
