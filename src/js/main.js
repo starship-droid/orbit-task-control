@@ -13,10 +13,28 @@ const taskInput = document.getElementById('task-input');
 const taskBoxEdit = document.getElementById('task-box-edit');
 let suppressInputBlur = false;
 
+// Find the next index (dir=+1 forward, dir=-1 backward) that satisfies filter.
+// Returns `from` unchanged if no match exists.
+function nextIdx(from, dir, filter) {
+  const n = state.tasks.length;
+  if (!n) return from;
+  let idx = (from + dir + n) % n;
+  for (let steps = 0; steps < n; steps++) {
+    if (filter(state.tasks[idx])) return idx;
+    idx = (idx + dir + n) % n;
+  }
+  return from;
+}
+
+function firstActiveIdx() {
+  const i = state.tasks.findIndex(t => !t.done);
+  return i >= 0 ? i : 0;
+}
+
 function goToRing() {
   if (!state.tasks.length) return;
   suppressInputBlur = true; taskInput.blur(); suppressInputBlur = false;
-  if (state.selectedIdx < 0) state.selectedIdx = 0;
+  if (state.selectedIdx < 0) state.selectedIdx = firstActiveIdx();
   setMode('ring');
 }
 
@@ -93,13 +111,13 @@ document.addEventListener('keydown', e => {
       break;
     case 'n': case 'N': e.preventDefault(); goToInput(); break;
 
-    // ── j: next task (saturn) / down (list) ──────────────────────────────────
+    // ── j: next active task (saturn) / down (list) ───────────────────────────
     case 'j': {
       e.preventDefault();
       if (!state.tasks.length) break;
       if (isSaturn) {
-        if (state.mode !== 'ring') { if (state.selectedIdx < 0) state.selectedIdx = 0; setMode('ring'); break; }
-        state.selectedIdx = (state.selectedIdx + 1) % state.tasks.length;
+        if (state.mode !== 'ring') { if (state.selectedIdx < 0) state.selectedIdx = firstActiveIdx(); setMode('ring'); break; }
+        state.selectedIdx = nextIdx(state.selectedIdx, 1, t => !t.done);
         state.selectedSubIdx = -1;
       } else {
         if (state.mode !== 'ring') { if (state.selectedIdx < 0) state.selectedIdx = 0; state.selectedSubIdx = -1; setMode('ring'); moveHighlight(); break; }
@@ -111,13 +129,13 @@ document.addEventListener('keydown', e => {
       break;
     }
 
-    // ── k: prev task (saturn) / up (list) ────────────────────────────────────
+    // ── k: prev active task (saturn) / up (list) ─────────────────────────────
     case 'k': {
       e.preventDefault();
       if (!state.tasks.length) break;
       if (isSaturn) {
-        if (state.mode !== 'ring') { if (state.selectedIdx < 0) state.selectedIdx = 0; setMode('ring'); break; }
-        state.selectedIdx = (state.selectedIdx - 1 + state.tasks.length) % state.tasks.length;
+        if (state.mode !== 'ring') { if (state.selectedIdx < 0) state.selectedIdx = firstActiveIdx(); setMode('ring'); break; }
+        state.selectedIdx = nextIdx(state.selectedIdx, -1, t => !t.done);
         state.selectedSubIdx = -1;
       } else {
         if (state.mode !== 'ring') { if (state.selectedIdx < 0) state.selectedIdx = 0; state.selectedSubIdx = -1; setMode('ring'); moveHighlight(); break; }
@@ -128,23 +146,34 @@ document.addEventListener('keydown', e => {
       break;
     }
 
-    // ── Arrow Left: next task (saturn, flipped) ───────────────────────────────
+    // ── Arrow Left: next active task (saturn, flipped) ───────────────────────
     case 'ArrowLeft': {
       e.preventDefault();
       if (!state.tasks.length || !isSaturn) break;
-      if (state.mode !== 'ring') { if (state.selectedIdx < 0) state.selectedIdx = 0; setMode('ring'); break; }
-      state.selectedIdx = (state.selectedIdx + 1) % state.tasks.length;
+      if (state.mode !== 'ring') { if (state.selectedIdx < 0) state.selectedIdx = firstActiveIdx(); setMode('ring'); break; }
+      state.selectedIdx = nextIdx(state.selectedIdx, 1, t => !t.done);
       state.selectedSubIdx = -1;
       break;
     }
 
-    // ── Arrow Right: prev task (saturn, flipped) ──────────────────────────────
+    // ── Arrow Right: prev active task (saturn, flipped) ───────────────────────
     case 'ArrowRight': {
       e.preventDefault();
       if (!state.tasks.length || !isSaturn) break;
-      if (state.mode !== 'ring') { if (state.selectedIdx < 0) state.selectedIdx = 0; setMode('ring'); break; }
-      state.selectedIdx = (state.selectedIdx - 1 + state.tasks.length) % state.tasks.length;
+      if (state.mode !== 'ring') { if (state.selectedIdx < 0) state.selectedIdx = firstActiveIdx(); setMode('ring'); break; }
+      state.selectedIdx = nextIdx(state.selectedIdx, -1, t => !t.done);
       state.selectedSubIdx = -1;
+      break;
+    }
+
+    // ── C: cycle through completed stars (saturn only) ────────────────────────
+    case 'c': case 'C': {
+      if (!isSaturn) break;
+      e.preventDefault();
+      if (!state.tasks.some(t => t.done)) break;
+      state.selectedIdx = nextIdx(state.selectedIdx, 1, t => t.done);
+      state.selectedSubIdx = -1;
+      if (state.mode !== 'ring') setMode('ring');
       break;
     }
 
