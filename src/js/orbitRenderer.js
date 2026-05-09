@@ -157,12 +157,17 @@ function drawTasks(rot) {
       });
     }
 
+    // Gold importance aura — drawn before planet so it sits behind
+    if (task.important && !task.done) {
+      target.appendChild(mk('circle', { cx: pt.x, cy: pt.y, r: r + 16, fill: 'rgba(255,200,87,0.14)', filter: 'url(#selectedGlow)', opacity }));
+      target.appendChild(mk('circle', { cx: pt.x, cy: pt.y, r: r + 8, fill: 'none', stroke: '#ffc857', 'stroke-width': '1.5', opacity: opacity * 0.9 }));
+    }
     // Task planet body (drawn on top of its ring + subtask dots)
     target.appendChild(mk('circle', { cx: pt.x, cy: pt.y, r: r + 6, fill: col.glow.replace('0.8', '0.18'), filter: 'url(#taskGlow)', opacity }));
     target.appendChild(mk('circle', { cx: pt.x, cy: pt.y, r, fill: task.done ? 'rgba(0,255,204,0.3)' : col.fill, opacity, ...(isSel ? { filter: 'url(#selectedGlow)', stroke: 'rgba(255,255,255,0.6)', 'stroke-width': '1.5' } : {}), ...(task.done ? { stroke: '#00ffcc', 'stroke-width': '1.5' } : {}) }));
     if (task.done) { const ck = mk('text', { x: pt.x, y: pt.y + 3, 'text-anchor': 'middle', 'font-size': '8', fill: '#00ffcc', opacity }); ck.textContent = '✓'; target.appendChild(ck); }
     if (task.important && !task.done) {
-      const s = mk('text', { x: pt.x, y: pt.y - r - 5, 'text-anchor': 'middle', 'font-size': '9', fill: '#ffc857', opacity, filter: 'url(#taskGlow)' });
+      const s = mk('text', { x: pt.x, y: pt.y - r - 7, 'text-anchor': 'middle', 'font-size': '11', fill: '#ffc857', opacity });
       s.textContent = '★'; target.appendChild(s);
     }
   });
