@@ -1,5 +1,5 @@
 import { state, COLORS, TASK_COLORS, save } from './taskStore.js';
-import { ringRotation, setNewTaskAnimating } from './orbitRenderer.js';
+import { ringRotation, setNewTaskAnimating, addCompletionAnimation, cancelCompletionAnimation } from './orbitRenderer.js';
 
 // ─── SETTINGS ────────────────────────────────────────────────────────────────
 let settingsOpen = false;
@@ -267,6 +267,11 @@ export function deleteLastSubtask(parentIdx) {
 export function completeTask(idx) {
   if (idx < 0 || idx >= state.tasks.length) return;
   state.tasks[idx].done = !state.tasks[idx].done;
+  if (state.tasks[idx].done) {
+    if (state.currentView === 'saturn') addCompletionAnimation(idx, state.tasks.length);
+  } else {
+    cancelCompletionAnimation(state.tasks[idx].id);
+  }
   burst(innerWidth / 2, innerHeight * 0.5, state.tasks[idx].done ? '#00ffcc' : TASK_COLORS[idx % TASK_COLORS.length].fill, 12);
   showToast(state.tasks[idx].done ? 'Mission complete 🛸' : 'Mission reopened ○'); save();
   if (state.currentView === 'list') renderList();
