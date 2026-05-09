@@ -90,9 +90,10 @@ export function updateTaskBox() {
       metaEl.innerHTML = `MISSION ${state.selectedIdx + 1} / ${state.tasks.length} · ${done} COMPLETE<span class="task-box-status-badge" data-status="${st}">${STATUS_LABELS[st] || STATUS_LABELS.todo}</span>`;
       lblEl.textContent = task.done ? 'MISSION COMPLETE' : (task.important ? '★ PRIORITY MISSION' : 'ACTIVE MISSION');
       const col = TASK_COLORS[state.selectedIdx % TASK_COLORS.length];
-      if (task.important && !task.done) {
-        box.style.borderColor = 'rgba(255,200,87,0.65)';
-        box.style.boxShadow = '0 0 28px rgba(255,200,87,0.22),0 0 0 1px rgba(255,200,87,0.1) inset';
+      const isPriority = task.important && !task.done;
+      box.classList.toggle('priority', isPriority);
+      if (isPriority) {
+        box.style.borderColor = ''; box.style.boxShadow = '';
       } else {
         box.style.borderColor = col.fill + '99';
         box.style.boxShadow = `0 0 28px ${col.glow.replace('0.8', '0.2')},0 0 0 1px ${col.fill}22 inset`;
@@ -121,7 +122,8 @@ export function updateTaskBox() {
     textEl.style.textDecoration = task.done ? 'line-through' : 'none';
     textEl.style.color = task.done ? 'rgba(0,255,204,0.7)' : '';
   } else {
-    box.classList.remove('visible');
+    box.classList.remove('visible', 'priority');
+    box.style.borderColor = ''; box.style.boxShadow = '';
     subDiv.dataset.key = '';
   }
 }
