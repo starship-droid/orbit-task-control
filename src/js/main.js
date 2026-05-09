@@ -3,9 +3,9 @@ import { startAnimLoop } from './orbitRenderer.js';
 import {
   toggleSettings, isSettingsOpen, setMode, toggleView,
   updateTaskBox, renderList, moveHighlight,
-  addTask, addSubtask, completeSubtask, deleteLastSubtask,
+  addTask, addSubtask, completeSubtask, deleteSubtask, deleteLastSubtask,
   completeTask, deleteTask, startEditTask, commitEdit,
-  exportTasks, importTasks,
+  exportTasks, importTasks, cycleTaskStatus,
 } from './taskModal.js';
 
 // ─── FOCUS / TAB MANAGEMENT ──────────────────────────────────────────────────
@@ -190,17 +190,26 @@ document.addEventListener('keydown', e => {
       }
       break;
 
+    case 'p': case 'P':
+      if (state.selectedIdx >= 0 && state.selectedSubIdx < 0) cycleTaskStatus(state.selectedIdx);
+      break;
+
     case 'e': case 'E':
       if (state.selectedIdx >= 0 && state.selectedSubIdx < 0) startEditTask(state.selectedIdx);
       break;
 
     case 'Delete':
-      if (state.selectedIdx >= 0 && state.selectedSubIdx < 0) deleteTask(state.selectedIdx);
+      if (state.selectedIdx >= 0) {
+        if (state.selectedSubIdx >= 0) deleteSubtask(state.selectedIdx, state.selectedSubIdx);
+        else deleteTask(state.selectedIdx);
+      }
       break;
 
     case 'Backspace':
-      if (active === document.body && state.selectedIdx >= 0 && state.selectedSubIdx < 0) {
-        e.preventDefault(); deleteTask(state.selectedIdx);
+      if (active === document.body && state.selectedIdx >= 0) {
+        e.preventDefault();
+        if (state.selectedSubIdx >= 0) deleteSubtask(state.selectedIdx, state.selectedSubIdx);
+        else deleteTask(state.selectedIdx);
       }
       break;
 

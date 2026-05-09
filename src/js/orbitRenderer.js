@@ -49,7 +49,13 @@ import { state, TASK_COLORS } from './taskStore.js';
 })();
 
 // ─── SATURN ENGINE ───────────────────────────────────────────────────────────
-const CX = 350, CY = 230, RING_RX = 210, RING_RY = 52, RING_TILT = -0.18, RING_PARTICLES = 80;
+const CX = 350, CY = 230, RING_TILT = -0.18, RING_PARTICLES = 26;
+const STATUS_RINGS = {
+  todo:       { rx: 158, ry: 40, col: 'rgba(77,201,255,'  }, // inner — closest to saturn
+  inprogress: { rx: 222, ry: 56, col: 'rgba(0,255,204,'   }, // outer
+};
+const RING_RX = STATUS_RINGS.todo.rx; // default radius (used by ellipsePoint)
+const RING_RY = STATUS_RINGS.todo.ry;
 const MINI_RX = 28, MINI_RY = 7;
 const SELECTED_ANGLE = Math.PI / 2;
 
@@ -61,8 +67,8 @@ export function setNewTaskAnimating(val) {
   newTaskAnimating = val;
 }
 
-export function ellipsePoint(angle) {
-  const x = CX + RING_RX * Math.cos(angle), y = CY + RING_RY * Math.sin(angle);
+export function ellipsePoint(angle, rx = RING_RX, ry = RING_RY) {
+  const x = CX + rx * Math.cos(angle), y = CY + ry * Math.sin(angle);
   const dx = x - CX, dy = y - CY;
   return { x: CX + dx * Math.cos(RING_TILT) - dy * Math.sin(RING_TILT), y: CY + dx * Math.sin(RING_TILT) + dy * Math.cos(RING_TILT) };
 }
@@ -75,34 +81,35 @@ function drawRing(rot) {
   const behind = document.getElementById('ring-behind'), front = document.getElementById('ring-front');
   behind.innerHTML = ''; front.innerHTML = '';
 
-  // Ellipse outlines — each drawn in both groups; clipPaths trim them to correct halves
-  [{ scale: 1.0, op: 0.55, sw: 1.2 }, { scale: 0.88, op: 0.35, sw: 0.8 }, { scale: 1.12, op: 0.25, sw: 0.6 }].forEach(r => {
-    const pts = [];
-    for (let a = 0; a <= Math.PI * 2; a += 0.05) {
-      const px = CX + RING_RX * r.scale * Math.cos(a), py = CY + RING_RY * r.scale * Math.sin(a);
-      const dx = px - CX, dy = py - CY;
-      pts.push([CX + dx * Math.cos(RING_TILT) - dy * Math.sin(RING_TILT), CY + dx * Math.sin(RING_TILT) + dy * Math.cos(RING_TILT)]);
-    }
-    const d = pts.map((p, i) => (i === 0 ? `M${p[0]},${p[1]}` : `L${p[0]},${p[1]}`)).join(' ') + 'Z';
-    const mk = (col, sw) => { const e = document.createElementNS('http://www.w3.org/2000/svg', 'path'); e.setAttribute('d', d); e.setAttribute('fill', 'none'); e.setAttribute('stroke', col); e.setAttribute('stroke-width', sw); return e; };
-    behind.appendChild(mk(`rgba(160,150,200,${r.op * 0.6})`, r.sw));
-    front.appendChild(mk(`rgba(200,190,230,${r.op})`, r.sw));
-  });
+  // Draw one ring band per status, each with its own colour
+  Object.values(STATUS_RINGS).forEach(({ rx, ry, col }) => {
+    [{ scale: 1.0, op: 0.55, sw: 1.2 }, { scale: 0.88, op: 0.35, sw: 0.8 }, { scale: 1.12, op: 0.25, sw: 0.6 }].forEach(r => {
+      const pts = [];
+      for (let a = 0; a <= Math.PI * 2; a += 0.05) {
+        const px = CX + rx * r.scale * Math.cos(a), py = CY + ry * r.scale * Math.sin(a);
+        const dx = px - CX, dy = py - CY;
+        pts.push([CX + dx * Math.cos(RING_TILT) - dy * Math.sin(RING_TILT), CY + dx * Math.sin(RING_TILT) + dy * Math.cos(RING_TILT)]);
+      }
+      const d = pts.map((p, i) => (i === 0 ? `M${p[0]},${p[1]}` : `L${p[0]},${p[1]}`)).join(' ') + 'Z';
+      const mkP = (stroke, sw) => { const e = document.createElementNS('http://www.w3.org/2000/svg', 'path'); e.setAttribute('d', d); e.setAttribute('fill', 'none'); e.setAttribute('stroke', stroke); e.setAttribute('stroke-width', sw); return e; };
+      behind.appendChild(mkP(`${col}${r.op * 0.6})`, r.sw));
+      front.appendChild(mkP(`${col}${r.op})`, r.sw));
+    });
 
-  // Dust particles — add each to BOTH groups; clipPaths handle which half is visible
-  for (let i = 0; i < RING_PARTICLES; i++) {
-    const angle = (i / RING_PARTICLES) * Math.PI * 2 + rot;
-    const rv = Math.sin(i * 7.3) * 0.18 + Math.cos(i * 3.1) * 0.08;
-    const px = CX + RING_RX * (1 + rv) * Math.cos(angle), py = CY + RING_RY * (1 + rv * 0.4) * Math.sin(angle);
-    const dx = px - CX, dy = py - CY;
-    const fx = CX + dx * Math.cos(RING_TILT) - dy * Math.sin(RING_TILT);
-    const fy = CY + dx * Math.sin(RING_TILT) + dy * Math.cos(RING_TILT);
-    const sz = i % 5 === 0 ? 2.8 : i % 3 === 0 ? 1.8 : 1.0;
-    const col = i % 5 === 0 ? 'rgba(200,190,220,0.7)' : i % 3 === 0 ? 'rgba(170,160,200,0.5)' : 'rgba(140,130,170,0.35)';
-    const mkC = (op) => { const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle'); c.setAttribute('cx', fx); c.setAttribute('cy', fy); c.setAttribute('r', sz); c.setAttribute('fill', col); c.setAttribute('opacity', op); return c; };
-    behind.appendChild(mkC(0.4));
-    front.appendChild(mkC(1.0));
-  }
+    for (let i = 0; i < RING_PARTICLES; i++) {
+      const angle = (i / RING_PARTICLES) * Math.PI * 2 + rot;
+      const rv = Math.sin(i * 7.3) * 0.18 + Math.cos(i * 3.1) * 0.08;
+      const px = CX + rx * (1 + rv) * Math.cos(angle), py = CY + ry * (1 + rv * 0.4) * Math.sin(angle);
+      const dx = px - CX, dy = py - CY;
+      const fx = CX + dx * Math.cos(RING_TILT) - dy * Math.sin(RING_TILT);
+      const fy = CY + dx * Math.sin(RING_TILT) + dy * Math.cos(RING_TILT);
+      const sz = i % 5 === 0 ? 2.8 : i % 3 === 0 ? 1.8 : 1.0;
+      const pcol = i % 5 === 0 ? `${col}0.7)` : i % 3 === 0 ? `${col}0.5)` : `${col}0.35)`;
+      const mkC = (op) => { const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle'); c.setAttribute('cx', fx); c.setAttribute('cy', fy); c.setAttribute('r', sz); c.setAttribute('fill', pcol); c.setAttribute('opacity', op); return c; };
+      behind.appendChild(mkC(0.4));
+      front.appendChild(mkC(1.0));
+    }
+  });
 }
 
 function drawTasks(rot) {
@@ -112,8 +119,9 @@ function drawTasks(rot) {
   const mk = (tag, attrs) => { const e = document.createElementNS('http://www.w3.org/2000/svg', tag); Object.entries(attrs).forEach(([k, v]) => e.setAttribute(k, v)); return e; };
 
   state.tasks.forEach((task, i) => {
+    const ring = STATUS_RINGS[task.status] || STATUS_RINGS.todo;
     const angle = (i / state.tasks.length) * Math.PI * 2 + rot;
-    const pt = ellipsePoint(angle);
+    const pt = ellipsePoint(angle, ring.rx, ring.ry);
     const col = TASK_COLORS[i % TASK_COLORS.length];
     const isSel = (i === state.selectedIdx) && state.mode === 'ring';
     const r = isSel ? 11 : (task.done ? 6 : 8);
@@ -157,7 +165,7 @@ function drawTasks(rot) {
 
   if (newTaskAnimating) {
     const { angle, progress, color } = newTaskAnimating;
-    const pt = ellipsePoint(angle);
+    const pt = ellipsePoint(angle, STATUS_RINGS.todo.rx, STATUS_RINGS.todo.ry);
     const r = progress < 0.4 ? (progress / 0.4) * 14 : progress < 0.7 ? 14 - ((progress - 0.4) / 0.3) * 6 : 8;
     const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
     c.setAttribute('cx', pt.x); c.setAttribute('cy', pt.y); c.setAttribute('r', r); c.setAttribute('fill', color.fill); c.setAttribute('opacity', Math.min(1, progress * 3));

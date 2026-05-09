@@ -86,7 +86,8 @@ export function updateTaskBox() {
       textEl.classList.toggle('task-title-selected', hasSubs && state.selectedSubIdx < 0);
       textEl.classList.toggle('task-title-dimmed', hasSubs && state.selectedSubIdx >= 0);
       const subDone = subs.filter(s => s.done).length;
-      metaEl.textContent = `MISSION ${state.selectedIdx + 1} / ${state.tasks.length} · ${done} COMPLETE`;
+      const st = task.status || 'todo';
+      metaEl.innerHTML = `MISSION ${state.selectedIdx + 1} / ${state.tasks.length} · ${done} COMPLETE<span class="task-box-status-badge" data-status="${st}">${STATUS_LABELS[st] || STATUS_LABELS.todo}</span>`;
       lblEl.textContent = task.done ? 'MISSION COMPLETE' : 'ACTIVE MISSION';
       const col = TASK_COLORS[state.selectedIdx % TASK_COLORS.length];
       box.style.borderColor = col.fill + '99';
@@ -110,7 +111,7 @@ export function updateTaskBox() {
       }
       subDiv.style.display = subs.length > 0 ? 'block' : 'none';
       subHint.style.display = 'block';
-      subHint.textContent = subs.length > 0 ? `${subDone}/${subs.length} SUBTASKS · ↑↓ NAV · Space DONE · ^N ADD` : 'Ctrl+N  ADD SUBTASK';
+      subHint.textContent = subs.length > 0 ? `${subDone}/${subs.length} SUBTASKS · ↑↓ · Space · ^N ADD · P STATUS` : '^N ADD SUBTASK · P CYCLE STATUS';
     }
     textEl.style.textDecoration = task.done ? 'line-through' : 'none';
     textEl.style.color = task.done ? 'rgba(0,255,204,0.7)' : '';
@@ -126,7 +127,7 @@ export function renderList() {
   const done = state.tasks.filter(t => t.done).length;
   count.textContent = `${done} / ${state.tasks.length} done`;
   empty.style.display = state.tasks.length === 0 ? 'flex' : 'none';
-  list.innerHTML = '';
+  list.innerHTML = ''; list.className = '';
   state.tasks.forEach((task, i) => {
     const el = document.createElement('div');
     el.className = `task-item${task.done ? ' done' : ''}`;
@@ -134,9 +135,11 @@ export function renderList() {
     const check = document.createElement('div'); check.className = 'task-check';
     const num = document.createElement('div'); num.className = 'task-num'; num.textContent = String(i + 1).padStart(2, '0');
     const dot = document.createElement('div'); dot.className = `task-priority ${COLORS[i % 3]}`;
+    const st = task.status || 'todo';
+    const badge = document.createElement('div'); badge.className = `task-status ${st}`; badge.title = STATUS_LABELS[st] || STATUS_LABELS.todo;
     if (task.editing) {
       const inp = document.createElement('input'); inp.className = 'task-edit-input'; inp.value = task.text; inp.type = 'text';
-      el.append(check, num, dot, inp); list.appendChild(el);
+      el.append(check, num, dot, inp, badge); list.appendChild(el);
       requestAnimationFrame(() => { inp.focus(); inp.selectionStart = inp.value.length; });
       inp.addEventListener('keydown', e => {
         if (e.key === 'Enter') { e.stopPropagation(); task.text = inp.value.trim() || task.text; task.editing = false; setMode('normal'); save(); renderList(); showToast('Mission updated ✎'); }
@@ -145,7 +148,7 @@ export function renderList() {
       inp.addEventListener('blur', () => { if (task.editing) { task.text = inp.value.trim() || task.text; task.editing = false; setMode('normal'); save(); renderList(); } });
     } else {
       const text = document.createElement('div'); text.className = 'task-text'; text.textContent = task.text;
-      el.append(check, num, dot, text);
+      el.append(check, num, dot, text, badge);
     }
     el.addEventListener('click', () => {
       if (state.mode === 'adding' || state.mode === 'adding-sub') return;
@@ -154,13 +157,10 @@ export function renderList() {
     });
     list.appendChild(el);
 
-    // Subtask rows beneath the parent task
-    const subs = task.subtasks || [];
-    subs.forEach((sub, j) => {
+    (task.subtasks || []).forEach((sub, j) => {
       const sr = document.createElement('div');
       sr.className = `subtask-row${sub.done ? ' done' : ''}`;
-      sr.dataset.taskIdx = i;
-      sr.dataset.subIdx = j;
+      sr.dataset.taskIdx = i; sr.dataset.subIdx = j;
       const connector = document.createElement('div'); connector.className = 'subtask-connector';
       const sdot = document.createElement('div'); sdot.className = 'subtask-dot';
       const stx = document.createElement('div'); stx.className = 'subtask-text'; stx.textContent = sub.text;
@@ -186,11 +186,27 @@ export function moveHighlight() {
   item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 }
 
+// ─── STATUS ──────────────────────────────────────────────────────────────────
+const STATUS_CYCLE = ['todo', 'inprogress'];
+const STATUS_LABELS = { todo: 'STAGING', inprogress: 'EN ROUTE', blocked: 'STALLED' };
+const STATUS_COLORS = { todo: '#4dc9ff', inprogress: '#00ffcc', blocked: '#ff5555' };
+
+export function cycleTaskStatus(idx) {
+  if (idx < 0 || idx >= state.tasks.length) return;
+  const task = state.tasks[idx];
+  const curr = STATUS_CYCLE.indexOf(task.status || 'todo');
+  task.status = STATUS_CYCLE[(curr + 1) % STATUS_CYCLE.length];
+  burst(innerWidth / 2, innerHeight * 0.5, STATUS_COLORS[task.status], 8);
+  showToast(STATUS_LABELS[task.status]);
+  save();
+  if (state.currentView === 'list') renderList();
+}
+
 // ─── ACTIONS ─────────────────────────────────────────────────────────────────
 export function addTask(text) {
   if (!text.trim()) return;
   const col = TASK_COLORS[state.tasks.length % TASK_COLORS.length];
-  state.tasks.push({ text: text.trim(), done: false, id: Date.now(), subtasks: [] });
+  state.tasks.push({ text: text.trim(), done: false, id: Date.now(), subtasks: [], status: 'todo' });
   const ni = state.tasks.length - 1;
   setNewTaskAnimating({ angle: (ni / state.tasks.length) * Math.PI * 2 + ringRotation, progress: 0, color: col });
   warpEffect(); burst(innerWidth / 2, innerHeight * 0.5, col.fill, 14);
@@ -211,6 +227,16 @@ export function completeSubtask(parentIdx, subIdx) {
   sub.done = !sub.done;
   burst(innerWidth / 2, innerHeight * 0.5, sub.done ? '#00ffcc' : TASK_COLORS[parentIdx % TASK_COLORS.length].fill, 8);
   showToast(sub.done ? 'Subtask complete ✓' : 'Subtask reopened ○'); save();
+  if (state.currentView === 'list') renderList();
+}
+
+export function deleteSubtask(parentIdx, subIdx) {
+  const subs = state.tasks[parentIdx]?.subtasks;
+  if (!subs || subIdx < 0 || subIdx >= subs.length) return;
+  burst(innerWidth / 2, innerHeight * 0.5, '#ff4d6d', 6);
+  subs.splice(subIdx, 1);
+  state.selectedSubIdx = subs.length > 0 ? Math.min(subIdx, subs.length - 1) : -1;
+  showToast('Subtask scrubbed ✕'); save();
   if (state.currentView === 'list') renderList();
 }
 
@@ -276,7 +302,7 @@ export function importTasks(event) {
       const imported = Array.isArray(data) ? data : (data.tasks || []);
       if (!Array.isArray(imported)) throw new Error();
       let added = 0;
-      imported.forEach(t => { if (t.text && !state.tasks.find(x => x.text === t.text)) { state.tasks.push({ text: t.text, done: !!t.done, id: t.id || Date.now() + added, subtasks: (t.subtasks || []).map(s => ({ id: s.id || Date.now(), text: s.text || '', done: !!s.done })) }); added++; } });
+      imported.forEach(t => { if (t.text && !state.tasks.find(x => x.text === t.text)) { state.tasks.push({ text: t.text, done: !!t.done, id: t.id || Date.now() + added, subtasks: (t.subtasks || []).map(s => ({ id: s.id || Date.now(), text: s.text || '', done: !!s.done })), status: STATUS_CYCLE.includes(t.status) ? t.status : 'todo' }); added++; } });
       save();
       if (added > 0) { if (state.selectedIdx < 0 && state.tasks.length > 0) state.selectedIdx = 0; showToast(`${added} mission${added > 1 ? 's' : ''} imported 🚀`); burst(innerWidth / 2, innerHeight * 0.5, '#b060ff', 14); }
       else showToast('No new missions found');
