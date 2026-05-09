@@ -74,7 +74,56 @@ export function ellipsePoint(angle, rx = RING_RX, ry = RING_RY) {
 }
 
 function getRotationForSelected(idx) {
-  return state.tasks.length === 0 ? 0 : SELECTED_ANGLE - (idx / state.tasks.length) * Math.PI * 2;
+  if (state.tasks.length === 0) return 0;
+  const task = state.tasks[idx];
+  if (!task || task.done) return ringRotation; // completed tasks leave the ring; don't snap
+  return SELECTED_ANGLE - (idx / state.tasks.length) * Math.PI * 2;
+}
+
+// ─── COMPLETED TASK STARS ─────────────────────────────────────────────────────
+function starPos(id) {
+  let h = ((id * 1664525 + 1013904223) >>> 0);
+  for (let attempt = 0; attempt < 30; attempt++) {
+    const r1 = (h % 65536) / 65536;
+    h = ((h * 1664525 + 1013904223) >>> 0);
+    const r2 = (h % 65536) / 65536;
+    h = ((h * 1664525 + 1013904223) >>> 0);
+    const x = 30 + r1 * 640;
+    const y = 25 + r2 * 410;
+    const dx = (x - CX) / 260, dy = (y - CY) / 125;
+    if (dx * dx + dy * dy > 1) return { x, y };
+  }
+  return { x: 40, y: 40 };
+}
+
+function drawCompletedStars(t) {
+  const group = document.getElementById('completed-stars');
+  group.innerHTML = '';
+  const mk = (tag, attrs) => { const e = document.createElementNS('http://www.w3.org/2000/svg', tag); Object.entries(attrs).forEach(([k, v]) => e.setAttribute(k, v)); return e; };
+
+  state.tasks.forEach((task, i) => {
+    if (!task.done) return;
+    const { x, y } = starPos(task.id);
+    const isSel = i === state.selectedIdx && state.mode === 'ring';
+    const twinkle = 0.55 + 0.45 * Math.sin(t * 1.8 + (task.id % 100) * 0.37);
+
+    // Outer glow
+    group.appendChild(mk('circle', { cx: x, cy: y, r: isSel ? 18 : 9, fill: `rgba(0,255,204,${((isSel ? 0.22 : 0.07) * twinkle).toFixed(3)})`, filter: 'url(#taskGlow)' }));
+
+    // 4-pointed star rays (+ and ×)
+    const rl = isSel ? 11 : 6.5;
+    [[1, 0], [0, 1], [0.707, 0.707], [-0.707, 0.707]].forEach(([dx, dy]) => {
+      group.appendChild(mk('line', {
+        x1: (x - dx * rl).toFixed(1), y1: (y - dy * rl).toFixed(1),
+        x2: (x + dx * rl).toFixed(1), y2: (y + dy * rl).toFixed(1),
+        stroke: '#00ffcc', 'stroke-width': isSel ? 1.3 : 0.8,
+        opacity: ((isSel ? 0.95 : 0.5) * twinkle).toFixed(3),
+      }));
+    });
+
+    // Core
+    group.appendChild(mk('circle', { cx: x, cy: y, r: isSel ? 3.5 : 2.2, fill: '#00ffcc', opacity: (isSel ? 1 : (0.8 * twinkle)).toFixed(3) }));
+  });
 }
 
 function drawRing(rot) {
@@ -119,6 +168,7 @@ function drawTasks(rot) {
   const mk = (tag, attrs) => { const e = document.createElementNS('http://www.w3.org/2000/svg', tag); Object.entries(attrs).forEach(([k, v]) => e.setAttribute(k, v)); return e; };
 
   state.tasks.forEach((task, i) => {
+    if (task.done) return; // completed tasks leave the ring and become stars
     const ring = STATUS_RINGS[task.status] || STATUS_RINGS.todo;
     const angle = (i / state.tasks.length) * Math.PI * 2 + rot;
     const pt = ellipsePoint(angle, ring.rx, ring.ry);
@@ -199,7 +249,7 @@ export function startAnimLoop(onFrame) {
     if (newTaskAnimating) { newTaskAnimating.progress += dt / 700; if (newTaskAnimating.progress >= 1) newTaskAnimating = null; }
     const es = document.getElementById('empty-svg-state');
     if (es) es.style.display = state.tasks.length === 0 ? 'block' : 'none';
-    if (state.currentView === 'saturn') { drawRing(ringRotation); drawTasks(ringRotation); }
+    if (state.currentView === 'saturn') { drawRing(ringRotation); drawCompletedStars(subTaskRotation); drawTasks(ringRotation); }
     onFrame();
     requestAnimationFrame(animLoop);
   }
