@@ -34,7 +34,7 @@ function firstActiveIdx() {
 function goToRing() {
   if (!state.tasks.length) return;
   suppressInputBlur = true; taskInput.blur(); suppressInputBlur = false;
-  if (state.selectedIdx < 0) state.selectedIdx = firstActiveIdx();
+  if (state.selectedIdx < 0 || state.tasks[state.selectedIdx]?.done) state.selectedIdx = firstActiveIdx();
   setMode('ring');
 }
 
