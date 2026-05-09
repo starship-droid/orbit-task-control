@@ -67,6 +67,29 @@ export function setNewTaskAnimating(val) {
   newTaskAnimating = val;
 }
 
+// ─── COMPLETION ANIMATIONS ────────────────────────────────────────────────────
+export let completionAnimations = [];
+
+export function addCompletionAnimation(taskIdx, n) {
+  const task = state.tasks[taskIdx];
+  if (!task) return;
+  const ring = STATUS_RINGS[task.status] || STATUS_RINGS.todo;
+  completionAnimations.push({
+    taskId: task.id,
+    angleOffset: (taskIdx / n) * Math.PI * 2,
+    ringRx: ring.rx,
+    ringRy: ring.ry,
+    color: TASK_COLORS[taskIdx % TASK_COLORS.length],
+    targetPos: starPos(task.id),
+    progress: 0,
+    ringExitPt: null,
+  });
+}
+
+export function cancelCompletionAnimation(taskId) {
+  completionAnimations = completionAnimations.filter(a => a.taskId !== taskId);
+}
+
 export function ellipsePoint(angle, rx = RING_RX, ry = RING_RY) {
   const x = CX + rx * Math.cos(angle), y = CY + ry * Math.sin(angle);
   const dx = x - CX, dy = y - CY;
@@ -103,6 +126,7 @@ function drawCompletedStars(t) {
 
   state.tasks.forEach((task, i) => {
     if (!task.done) return;
+    if (completionAnimations.some(a => a.taskId === task.id)) return; // still animating in
     const { x, y } = starPos(task.id);
     const isSel = i === state.selectedIdx && state.mode === 'ring';
     const twinkle = 0.55 + 0.45 * Math.sin(t * 1.8 + (task.id % 100) * 0.37);
@@ -123,6 +147,82 @@ function drawCompletedStars(t) {
 
     // Core
     group.appendChild(mk('circle', { cx: x, cy: y, r: isSel ? 3.5 : 2.2, fill: '#00ffcc', opacity: (isSel ? 1 : (0.8 * twinkle)).toFixed(3) }));
+  });
+}
+
+function drawCompletionAnimations() {
+  if (!completionAnimations.length) return;
+  const front = document.getElementById('tasks-front');
+  const mk = (tag, attrs) => { const e = document.createElementNS('http://www.w3.org/2000/svg', tag); Object.entries(attrs).forEach(([k, v]) => e.setAttribute(k, v)); return e; };
+
+  completionAnimations.forEach(anim => {
+    const { progress, angleOffset, ringRx, ringRy, color, targetPos } = anim;
+
+    if (progress < 0.5) {
+      // ── Phase 1: accelerating orbit ──────────────────────────────────────────
+      const t = progress / 0.5;
+      const extraAngle = t * t * Math.PI * 3; // quadratic ease-in → ~1.5 extra orbits
+      const angle = angleOffset + ringRotation + extraAngle;
+      const pt = ellipsePoint(angle, ringRx, ringRy);
+
+      // Speed trail — ghost copies at earlier angles, fading out
+      for (let i = 3; i >= 1; i--) {
+        const ta = angle - i * 0.14 * (1 + t * 4);
+        const tp = ellipsePoint(ta, ringRx, ringRy);
+        front.appendChild(mk('circle', { cx: tp.x.toFixed(1), cy: tp.y.toFixed(1), r: 9 - i * 1.5, fill: color.fill, opacity: ((0.28 - i * 0.06) * t).toFixed(3) }));
+      }
+      // Growing glow as it accelerates
+      front.appendChild(mk('circle', { cx: pt.x.toFixed(1), cy: pt.y.toFixed(1), r: (20 + t * 8).toFixed(1), fill: color.glow.replace('0.8', (0.1 + t * 0.2).toFixed(2)), filter: 'url(#selectedGlow)' }));
+      // Planet body (grows slightly)
+      front.appendChild(mk('circle', { cx: pt.x.toFixed(1), cy: pt.y.toFixed(1), r: (10 + t * 3).toFixed(1), fill: color.fill }));
+
+    } else if (progress < 0.8) {
+      // ── Phase 2: launch streak toward star position ───────────────────────────
+      if (!anim.ringExitPt) {
+        // Snapshot the ring position at the moment of launch
+        anim.ringExitPt = ellipsePoint(angleOffset + ringRotation + Math.PI * 3, ringRx, ringRy);
+      }
+      const t = (progress - 0.5) / 0.3;
+      const ease = t * t * (3 - 2 * t); // smoothstep
+      const x = anim.ringExitPt.x + (targetPos.x - anim.ringExitPt.x) * ease;
+      const y = anim.ringExitPt.y + (targetPos.y - anim.ringExitPt.y) * ease;
+
+      // Comet tail pointing back along travel direction
+      const dx = targetPos.x - anim.ringExitPt.x, dy = targetPos.y - anim.ringExitPt.y;
+      const len = Math.sqrt(dx * dx + dy * dy) || 1;
+      const sl = (1 - ease) * 35;
+      front.appendChild(mk('line', {
+        x1: x.toFixed(1), y1: y.toFixed(1),
+        x2: (x - dx / len * sl).toFixed(1), y2: (y - dy / len * sl).toFixed(1),
+        stroke: color.fill, 'stroke-width': (4 - ease * 3).toFixed(1),
+        opacity: ((1 - ease) * 0.8).toFixed(3),
+      }));
+      // Planet shrinking as it flies
+      const r = 13 - ease * 10.5;
+      front.appendChild(mk('circle', { cx: x.toFixed(1), cy: y.toFixed(1), r: (r + 7).toFixed(1), fill: color.glow.replace('0.8', '0.2'), filter: 'url(#taskGlow)' }));
+      front.appendChild(mk('circle', { cx: x.toFixed(1), cy: y.toFixed(1), r: r.toFixed(1), fill: color.fill }));
+
+    } else {
+      // ── Phase 3: materialize as a star ───────────────────────────────────────
+      const t = (progress - 0.8) / 0.2;
+      const { x, y } = targetPos;
+
+      // Expanding ring shockwave
+      front.appendChild(mk('circle', { cx: x, cy: y, r: (t * 30).toFixed(1), fill: 'none', stroke: '#00ffcc', 'stroke-width': (3 - t * 2.5).toFixed(1), opacity: ((1 - t) * 0.7).toFixed(3) }));
+      // Inner implosion glow
+      front.appendChild(mk('circle', { cx: x, cy: y, r: (20 * (1 - t)).toFixed(1), fill: `rgba(0,255,204,${(0.25 * (1 - t)).toFixed(3)})`, filter: 'url(#selectedGlow)' }));
+      // Star rays crystallising
+      const rl = t * 11;
+      [[1, 0], [0, 1], [0.707, 0.707], [-0.707, 0.707]].forEach(([vx, vy]) => {
+        front.appendChild(mk('line', {
+          x1: (x - vx * rl).toFixed(1), y1: (y - vy * rl).toFixed(1),
+          x2: (x + vx * rl).toFixed(1), y2: (y + vy * rl).toFixed(1),
+          stroke: '#00ffcc', 'stroke-width': 1.3, opacity: t.toFixed(3),
+        }));
+      });
+      // Core snapping into place
+      front.appendChild(mk('circle', { cx: x, cy: y, r: 2.5, fill: '#00ffcc', opacity: t.toFixed(3) }));
+    }
   });
 }
 
@@ -247,9 +347,11 @@ export function startAnimLoop(onFrame) {
       ringRotation += diff * 0.08;
     }
     if (newTaskAnimating) { newTaskAnimating.progress += dt / 700; if (newTaskAnimating.progress >= 1) newTaskAnimating = null; }
+    completionAnimations.forEach(a => { a.progress += dt / 1600; });
+    completionAnimations = completionAnimations.filter(a => a.progress < 1);
     const es = document.getElementById('empty-svg-state');
     if (es) es.style.display = state.tasks.length === 0 ? 'block' : 'none';
-    if (state.currentView === 'saturn') { drawRing(ringRotation); drawCompletedStars(subTaskRotation); drawTasks(ringRotation); }
+    if (state.currentView === 'saturn') { drawRing(ringRotation); drawCompletedStars(subTaskRotation); drawTasks(ringRotation); drawCompletionAnimations(); }
     onFrame();
     requestAnimationFrame(animLoop);
   }
