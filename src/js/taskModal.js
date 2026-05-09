@@ -88,10 +88,15 @@ export function updateTaskBox() {
       const subDone = subs.filter(s => s.done).length;
       const st = task.status || 'todo';
       metaEl.innerHTML = `MISSION ${state.selectedIdx + 1} / ${state.tasks.length} · ${done} COMPLETE<span class="task-box-status-badge" data-status="${st}">${STATUS_LABELS[st] || STATUS_LABELS.todo}</span>`;
-      lblEl.textContent = task.done ? 'MISSION COMPLETE' : 'ACTIVE MISSION';
+      lblEl.textContent = task.done ? 'MISSION COMPLETE' : (task.important ? '★ PRIORITY MISSION' : 'ACTIVE MISSION');
       const col = TASK_COLORS[state.selectedIdx % TASK_COLORS.length];
-      box.style.borderColor = col.fill + '99';
-      box.style.boxShadow = `0 0 28px ${col.glow.replace('0.8', '0.2')},0 0 0 1px ${col.fill}22 inset`;
+      if (task.important && !task.done) {
+        box.style.borderColor = 'rgba(255,200,87,0.65)';
+        box.style.boxShadow = '0 0 28px rgba(255,200,87,0.22),0 0 0 1px rgba(255,200,87,0.1) inset';
+      } else {
+        box.style.borderColor = col.fill + '99';
+        box.style.boxShadow = `0 0 28px ${col.glow.replace('0.8', '0.2')},0 0 0 1px ${col.fill}22 inset`;
+      }
 
       // Subtask list — rebuild when content or selection changes
       const subsKey = JSON.stringify(subs) + '|' + state.selectedSubIdx;
@@ -111,7 +116,7 @@ export function updateTaskBox() {
       }
       subDiv.style.display = subs.length > 0 ? 'block' : 'none';
       subHint.style.display = 'block';
-      subHint.textContent = subs.length > 0 ? `${subDone}/${subs.length} SUBTASKS · ↑↓ · Space · ^N ADD · P STATUS` : '^N ADD SUBTASK · P CYCLE STATUS';
+      subHint.textContent = subs.length > 0 ? `${subDone}/${subs.length} SUBTASKS · ↑↓ · Space · ^N ADD · P STATUS` : '^N ADD · P STATUS · I PRIORITY';
     }
     textEl.style.textDecoration = task.done ? 'line-through' : 'none';
     textEl.style.color = task.done ? 'rgba(0,255,204,0.7)' : '';
@@ -130,16 +135,17 @@ export function renderList() {
   list.innerHTML = ''; list.className = '';
   state.tasks.forEach((task, i) => {
     const el = document.createElement('div');
-    el.className = `task-item${task.done ? ' done' : ''}`;
+    el.className = `task-item${task.done ? ' done' : ''}${task.important ? ' important' : ''}`;
     el.dataset.idx = i;
     const check = document.createElement('div'); check.className = 'task-check';
     const num = document.createElement('div'); num.className = 'task-num'; num.textContent = String(i + 1).padStart(2, '0');
+    const star = document.createElement('div'); star.className = `task-star${task.important ? ' lit' : ''}`; star.textContent = '★';
     const dot = document.createElement('div'); dot.className = `task-priority ${COLORS[i % 3]}`;
     const st = task.status || 'todo';
     const badge = document.createElement('div'); badge.className = `task-status ${st}`; badge.title = STATUS_LABELS[st] || STATUS_LABELS.todo;
     if (task.editing) {
       const inp = document.createElement('input'); inp.className = 'task-edit-input'; inp.value = task.text; inp.type = 'text';
-      el.append(check, num, dot, inp, badge); list.appendChild(el);
+      el.append(check, num, star, dot, inp, badge); list.appendChild(el);
       requestAnimationFrame(() => { inp.focus(); inp.selectionStart = inp.value.length; });
       inp.addEventListener('keydown', e => {
         if (e.key === 'Enter') { e.stopPropagation(); task.text = inp.value.trim() || task.text; task.editing = false; setMode('normal'); save(); renderList(); showToast('Mission updated ✎'); }
@@ -148,7 +154,7 @@ export function renderList() {
       inp.addEventListener('blur', () => { if (task.editing) { task.text = inp.value.trim() || task.text; task.editing = false; setMode('normal'); save(); renderList(); } });
     } else {
       const text = document.createElement('div'); text.className = 'task-text'; text.textContent = task.text;
-      el.append(check, num, dot, text, badge);
+      el.append(check, num, star, dot, text, badge);
     }
     el.addEventListener('click', () => {
       if (state.mode === 'adding' || state.mode === 'adding-sub') return;
@@ -191,6 +197,15 @@ const STATUS_CYCLE = ['todo', 'inprogress'];
 const STATUS_LABELS = { todo: 'STAGING', inprogress: 'EN ROUTE', blocked: 'STALLED' };
 const STATUS_COLORS = { todo: '#4dc9ff', inprogress: '#00ffcc', blocked: '#ff5555' };
 
+export function toggleImportant(idx) {
+  if (idx < 0 || idx >= state.tasks.length) return;
+  state.tasks[idx].important = !state.tasks[idx].important;
+  burst(innerWidth / 2, innerHeight * 0.5, '#ffc857', 8);
+  showToast(state.tasks[idx].important ? '★ Priority flagged' : '✕ Priority cleared');
+  save();
+  if (state.currentView === 'list') renderList();
+}
+
 export function cycleTaskStatus(idx) {
   if (idx < 0 || idx >= state.tasks.length) return;
   const task = state.tasks[idx];
@@ -206,7 +221,7 @@ export function cycleTaskStatus(idx) {
 export function addTask(text) {
   if (!text.trim()) return;
   const col = TASK_COLORS[state.tasks.length % TASK_COLORS.length];
-  state.tasks.push({ text: text.trim(), done: false, id: Date.now(), subtasks: [], status: 'todo' });
+  state.tasks.push({ text: text.trim(), done: false, id: Date.now(), subtasks: [], status: 'todo', important: false });
   const ni = state.tasks.length - 1;
   setNewTaskAnimating({ angle: (ni / state.tasks.length) * Math.PI * 2 + ringRotation, progress: 0, color: col });
   warpEffect(); burst(innerWidth / 2, innerHeight * 0.5, col.fill, 14);
@@ -302,7 +317,7 @@ export function importTasks(event) {
       const imported = Array.isArray(data) ? data : (data.tasks || []);
       if (!Array.isArray(imported)) throw new Error();
       let added = 0;
-      imported.forEach(t => { if (t.text && !state.tasks.find(x => x.text === t.text)) { state.tasks.push({ text: t.text, done: !!t.done, id: t.id || Date.now() + added, subtasks: (t.subtasks || []).map(s => ({ id: s.id || Date.now(), text: s.text || '', done: !!s.done })), status: STATUS_CYCLE.includes(t.status) ? t.status : 'todo' }); added++; } });
+      imported.forEach(t => { if (t.text && !state.tasks.find(x => x.text === t.text)) { state.tasks.push({ text: t.text, done: !!t.done, id: t.id || Date.now() + added, subtasks: (t.subtasks || []).map(s => ({ id: s.id || Date.now(), text: s.text || '', done: !!s.done })), status: STATUS_CYCLE.includes(t.status) ? t.status : 'todo', important: !!t.important }); added++; } });
       save();
       if (added > 0) { if (state.selectedIdx < 0 && state.tasks.length > 0) state.selectedIdx = 0; showToast(`${added} mission${added > 1 ? 's' : ''} imported 🚀`); burst(innerWidth / 2, innerHeight * 0.5, '#b060ff', 14); }
       else showToast('No new missions found');

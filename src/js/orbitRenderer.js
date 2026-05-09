@@ -161,6 +161,10 @@ function drawTasks(rot) {
     target.appendChild(mk('circle', { cx: pt.x, cy: pt.y, r: r + 6, fill: col.glow.replace('0.8', '0.18'), filter: 'url(#taskGlow)', opacity }));
     target.appendChild(mk('circle', { cx: pt.x, cy: pt.y, r, fill: task.done ? 'rgba(0,255,204,0.3)' : col.fill, opacity, ...(isSel ? { filter: 'url(#selectedGlow)', stroke: 'rgba(255,255,255,0.6)', 'stroke-width': '1.5' } : {}), ...(task.done ? { stroke: '#00ffcc', 'stroke-width': '1.5' } : {}) }));
     if (task.done) { const ck = mk('text', { x: pt.x, y: pt.y + 3, 'text-anchor': 'middle', 'font-size': '8', fill: '#00ffcc', opacity }); ck.textContent = '✓'; target.appendChild(ck); }
+    if (task.important && !task.done) {
+      const s = mk('text', { x: pt.x, y: pt.y - r - 5, 'text-anchor': 'middle', 'font-size': '9', fill: '#ffc857', opacity, filter: 'url(#taskGlow)' });
+      s.textContent = '★'; target.appendChild(s);
+    }
   });
 
   if (newTaskAnimating) {

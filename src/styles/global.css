@@ -119,6 +119,11 @@ html, body { height:100%; overflow:hidden; background:var(--void); color:var(--t
 #settings-btn svg { width:14px; height:14px; transition:transform 0.4s ease; flex-shrink:0; }
 #settings-btn.open svg { transform:rotate(60deg); }
 
+/* ── IMPORTANT TASK ── */
+.task-star { font-size:0.7rem; flex-shrink:0; color:transparent; min-width:10px; text-align:center; transition:color 0.25s,text-shadow 0.25s; line-height:1; }
+.task-star.lit { color:#ffc857; text-shadow:0 0 8px rgba(255,200,87,0.8),0 0 18px rgba(255,200,87,0.35); }
+.task-item.important { border-color:rgba(255,200,87,0.18); background:rgba(255,200,87,0.03); }
+
 /* ── TASK STATUS INDICATOR (list view) ── */
 .task-status { width:7px; height:7px; border-radius:50%; flex-shrink:0; align-self:center; margin-left:4px; }
 .task-status.todo { border:1.5px solid rgba(77,201,255,0.4); background:transparent; }

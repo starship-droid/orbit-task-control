@@ -5,7 +5,7 @@ import {
   updateTaskBox, renderList, moveHighlight,
   addTask, addSubtask, completeSubtask, deleteSubtask, deleteLastSubtask,
   completeTask, deleteTask, startEditTask, commitEdit,
-  exportTasks, importTasks, cycleTaskStatus,
+  exportTasks, importTasks, cycleTaskStatus, toggleImportant,
 } from './taskModal.js';
 
 // ─── FOCUS / TAB MANAGEMENT ──────────────────────────────────────────────────
@@ -188,6 +188,10 @@ document.addEventListener('keydown', e => {
         if (state.selectedSubIdx >= 0) completeSubtask(state.selectedIdx, state.selectedSubIdx);
         else completeTask(state.selectedIdx);
       }
+      break;
+
+    case 'i': case 'I':
+      if (state.selectedIdx >= 0 && state.selectedSubIdx < 0) toggleImportant(state.selectedIdx);
       break;
 
     case 'p': case 'P':
