@@ -2,14 +2,17 @@
 
 ## Project Overview
 
-ORBIT is a sci-fi flavoured personal task manager built with **Astro + vanilla JS modules** (no runtime framework — all DOM manipulation is hand-rolled). It ships two views:
+ORBIT is a sci-fi flavoured personal task manager built with **Astro + vanilla JS modules** (no runtime framework — all DOM manipulation is hand-rolled). It ships three views:
 
 - **Saturn view** — tasks orbit a Saturn planet as glowing SVG spheres. The ring a task sits on encodes its status (inner = todo, outer = in-progress). The selected task snaps to the front of the ring with smooth animation.
 - **List view** — a flat list with subtask connector lines and subtle status/priority indicators.
+- **Nebula view** — habit tracking. Each habit is its own constellation inside a shared pannable/zoomable starfield; checking in a habit adds a star to its constellation at a deterministic-but-unpredictable ("mystery") position. Habit colour is user-chosen; constellation shape is not.
+
+Views cycle forward-only via Shift+Tab: saturn → list → nebula → saturn.
 
 The aesthetic is deep-space mission control: `Space Mono` + `Orbitron` fonts, neon glows (cyan, teal, violet, gold), glass-morphism panels with corner brackets, a scanlines overlay, and animated starfield + nebula canvas. New interactions should feel like issuing commands from a starship bridge — bold in Saturn view, precise in list view.
 
-Data is persisted to `localStorage` under the key `orbit-tasks`. There is no backend.
+Data is persisted to `localStorage` under two keys: `orbit-tasks` (tasks) and `orbit-habits` (habits). There is no backend.
 
 ---
 
@@ -20,12 +23,18 @@ src/
   pages/index.astro     — HTML shell; contains the version string in <div class="s-version">
   styles/global.css     — all CSS (single file)
   js/
-    taskStore.js        — state object + localStorage save()
-    taskModal.js        — all rendering (renderList, updateTaskBox) + all CRUD actions
+    taskStore.js        — state object + localStorage save() (persists both tasks and habits)
+    taskModal.js        — task rendering (renderList, updateTaskBox) + task CRUD actions + view toggle
+    habitModal.js        — habit CRUD actions (addHabit, toggleCheckin, cycleHabitColor, etc.) + updateHabitBox
     orbitRenderer.js    — Saturn SVG animation engine (requestAnimationFrame)
+    nebulaRenderer.js   — Nebula SVG animation engine (constellation layout, camera pan/zoom)
     main.js             — keyboard event wiring + focus management
 package.json            — canonical version field
 ```
+
+### Modes
+
+`state.mode` values: `normal`, `adding`, `adding-sub`, `ring`, `editing` (task-side) and `adding-habit`, `habit-select`, `editing-habit` (habit-side, nebula view). A mode from one side is reset to `normal` when `toggleView()` crosses the nebula boundary, since e.g. `ring` and `habit-select` guard unrelated key handlers.
 
 ---
 
@@ -109,6 +118,26 @@ When reading tasks from localStorage or importing JSON, always normalise missing
 - `t.subtasks || []`
 
 This ensures backward compatibility when new fields are added.
+
+---
+
+## Habit Data Model
+
+```js
+{
+  text:     string,
+  id:       number,          // Date.now()
+  color:    string,          // resolved hex, e.g. '#4dc9ff' — one of TASK_COLORS
+  checkins: [ 'YYYY-MM-DD' ],
+}
+```
+
+A habit's constellation position is never persisted — it's re-derived each
+render from `homePoint(habitIndex)` (deterministic by creation order) plus
+`starOffset(habitId, dateStr)` (a deterministic hash, same LCG technique as
+Saturn's completed-task stars) per check-in date. This is what keeps a
+constellation's *shape* a "mystery" to the user while staying reproducible
+across reloads.
 
 ---
 

@@ -11,8 +11,10 @@ export const TASK_COLORS = [
 
 export const state = {
   tasks: JSON.parse(localStorage.getItem('orbit-tasks') || '[]'),
+  habits: JSON.parse(localStorage.getItem('orbit-habits') || '[]'),
   selectedIdx: -1,
   selectedSubIdx: -1,
+  selectedHabitIdx: -1,
   mode: 'normal',
   currentView: 'saturn',
   addingSubtaskFor: -1,
@@ -20,4 +22,5 @@ export const state = {
 
 export function save() {
   localStorage.setItem('orbit-tasks', JSON.stringify(state.tasks));
+  localStorage.setItem('orbit-habits', JSON.stringify(state.habits));
 }

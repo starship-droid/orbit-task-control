@@ -22,20 +22,47 @@ export function setMode(m) {
   state.mode = m;
   const ind = document.getElementById('mode-indicator');
   ind.className = m !== 'normal' ? m : '';
-  ind.textContent = { normal: 'ORBIT CONTROL', adding: 'ADDING MISSION', 'adding-sub': 'ADD SUBTASK', ring: 'RING NAVIGATION', editing: 'EDITING MISSION' }[m] || 'ORBIT CONTROL';
+  ind.textContent = {
+    normal: 'ORBIT CONTROL', adding: 'ADDING MISSION', 'adding-sub': 'ADD SUBTASK', ring: 'RING NAVIGATION', editing: 'EDITING MISSION',
+    'adding-habit': 'LOGGING HABIT', 'habit-select': 'CONSTELLATION NAV', 'editing-habit': 'EDITING HABIT',
+  }[m] || 'ORBIT CONTROL';
 }
 
 // ─── VIEW TOGGLE ─────────────────────────────────────────────────────────────
+const VIEW_ORDER = ['saturn', 'list', 'nebula'];
+const VIEW_ELEMENT_IDS = { saturn: 'saturn-view', list: 'list-view', nebula: 'nebula-view' };
+
+export function updateInputPlaceholder() {
+  const el = document.getElementById('task-input');
+  if (el) el.placeholder = state.currentView === 'nebula' ? 'New habit directive…' : 'New mission directive…';
+}
+
 export function toggleView() {
   state.selectedSubIdx = -1;
-  const sv = document.getElementById('saturn-view'), lv = document.getElementById('list-view');
-  if (state.currentView === 'saturn') {
-    sv.className = 'view offleft'; lv.className = 'view active';
-    state.currentView = 'list'; renderList();
-  } else {
-    sv.className = 'view active'; lv.className = 'view offright';
-    state.currentView = 'saturn';
-  }
+  const prevView = state.currentView;
+  const curr = VIEW_ORDER.indexOf(prevView);
+  const nextI = (curr + 1) % VIEW_ORDER.length;
+  const rightI = (nextI + 1) % VIEW_ORDER.length;
+  const leftI = (nextI + 2) % VIEW_ORDER.length;
+  VIEW_ORDER.forEach((v, i) => {
+    const el = document.getElementById(VIEW_ELEMENT_IDS[v]);
+    if (!el) return;
+    el.className = i === nextI ? 'view active' : i === rightI ? 'view offright' : 'view offleft';
+  });
+  state.currentView = VIEW_ORDER[nextI];
+
+  // Mode doesn't carry meaning across the nebula boundary — reset so a stale
+  // mode (e.g. Ctrl+N's mode==='ring' guard) can't fire against a selection
+  // that no longer corresponds to the visible view.
+  if (state.currentView === 'nebula' && prevView !== 'nebula' && state.mode === 'ring') setMode('normal');
+  if (prevView === 'nebula' && state.currentView !== 'nebula' && state.mode === 'habit-select') setMode('normal');
+  // If the input is actively focused for "new item" entry while the view
+  // changes underneath it (input keeps focus across the cycle), keep the
+  // mode in sync so Enter routes to the right add function.
+  if (state.mode === 'adding' || state.mode === 'adding-habit') setMode(state.currentView === 'nebula' ? 'adding-habit' : 'adding');
+
+  updateInputPlaceholder();
+  if (state.currentView === 'list') renderList();
 }
 
 // ─── TOAST ───────────────────────────────────────────────────────────────────
@@ -307,9 +334,12 @@ export function commitEdit(idx) {
 }
 
 // ─── EXPORT / IMPORT ─────────────────────────────────────────────────────────
+const HEX_COLOR_RE = /^#[0-9a-fA-F]{6}$/;
+const DATE_KEY_RE = /^\d{4}-\d{2}-\d{2}$/;
+
 export function exportTasks() {
-  if (!state.tasks.length) { showToast('No missions to export'); return; }
-  const blob = new Blob([JSON.stringify({ version: 1, exported: new Date().toISOString(), tasks: state.tasks }, null, 2)], { type: 'application/json' });
+  if (!state.tasks.length && !state.habits.length) { showToast('No missions to export'); return; }
+  const blob = new Blob([JSON.stringify({ version: 1, exported: new Date().toISOString(), tasks: state.tasks, habits: state.habits }, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob), a = document.createElement('a');
   a.href = url; a.download = `orbit-missions-${new Date().toISOString().slice(0, 10)}.json`; a.click(); URL.revokeObjectURL(url);
   showToast('Missions exported 💾');
@@ -325,8 +355,23 @@ export function importTasks(event) {
       if (!Array.isArray(imported)) throw new Error();
       let added = 0;
       imported.forEach(t => { if (t.text && !state.tasks.find(x => x.text === t.text)) { state.tasks.push({ text: t.text, done: !!t.done, id: t.id || Date.now() + added, subtasks: (t.subtasks || []).map(s => ({ id: s.id || Date.now(), text: s.text || '', done: !!s.done })), status: STATUS_CYCLE.includes(t.status) ? t.status : 'todo', important: !!t.important }); added++; } });
+
+      const importedHabits = Array.isArray(data.habits) ? data.habits : [];
+      let addedHabits = 0;
+      importedHabits.forEach(h => {
+        if (h.text && !state.habits.find(x => x.text === h.text)) {
+          state.habits.push({
+            text: h.text, id: h.id || Date.now() + addedHabits,
+            color: HEX_COLOR_RE.test(h.color) ? h.color : TASK_COLORS[state.habits.length % TASK_COLORS.length].fill,
+            checkins: Array.isArray(h.checkins) ? h.checkins.filter(d => DATE_KEY_RE.test(d)) : [],
+          });
+          addedHabits++;
+        }
+      });
+
       save();
       if (added > 0) { if (state.selectedIdx < 0 && state.tasks.length > 0) state.selectedIdx = 0; showToast(`${added} mission${added > 1 ? 's' : ''} imported 🚀`); burst(innerWidth / 2, innerHeight * 0.5, '#b060ff', 14); }
+      else if (addedHabits > 0) showToast(`${addedHabits} habit${addedHabits > 1 ? 's' : ''} imported ✦`);
       else showToast('No new missions found');
     } catch { showToast('Import failed — invalid file'); }
     event.target.value = '';

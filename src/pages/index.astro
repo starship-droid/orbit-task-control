@@ -48,7 +48,7 @@ import '../styles/global.css';
     <div>
       <div class="s-title">Project</div>
       <a class="s-github" href="https://github.com/starship-droid/orbit-task-control" target="_blank" rel="noopener">starship-droid/orbit-task-control</a>
-      <div class="s-version">v0.5.3</div>
+      <div class="s-version">v0.6.0</div>
     </div>
   </div>
 </div>
@@ -101,6 +101,11 @@ import '../styles/global.css';
           </filter>
           <filter id="selectedGlow" x="-80%" y="-80%" width="260%" height="260%">
             <feGaussianBlur stdDeviation="6" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <!-- Soft diffuse cloud look for Nebula view's overview (unresolved) habits -->
+          <filter id="cloudBlur" x="-100%" y="-100%" width="300%" height="300%">
+            <feGaussianBlur stdDeviation="14" result="blur"/>
             <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
           </filter>
         </defs>
@@ -163,8 +168,28 @@ import '../styles/global.css';
           </div>
           <div id="task-list"></div>
         </div>
-        <div class="view-badge" style="padding:8px 0;">SHIFT+TAB → SATURN VIEW</div>
+        <div class="view-badge" style="padding:8px 0;">SHIFT+TAB → NEBULA VIEW</div>
       </div>
+    </div>
+
+    <!-- NEBULA VIEW -->
+    <div class="view offleft" id="nebula-view">
+      <svg id="nebula-canvas" viewBox="-350 -230 700 460" xmlns="http://www.w3.org/2000/svg">
+        <g id="nebula-stars"></g>
+      </svg>
+
+      <div id="habit-label-overlay">
+        <div id="selected-habit-box">
+          <div class="corner tl"></div><div class="corner tr"></div>
+          <div class="corner bl"></div><div class="corner br"></div>
+          <div id="habit-box-label">ACTIVE HABIT</div>
+          <div id="habit-box-text"></div>
+          <input id="habit-box-edit" type="text" autocomplete="off" spellcheck="false"/>
+          <div id="habit-box-meta"></div>
+        </div>
+      </div>
+
+      <div class="view-badge">SHIFT+TAB → SATURN VIEW</div>
     </div>
 
   </div>
@@ -179,11 +204,12 @@ import '../styles/global.css';
     <div class="shortcut"><span class="key">E</span> Edit</div>
     <div class="shortcut"><span class="key">Del</span> Delete</div>
     <div class="shortcut"><span class="key">N</span> New</div>
-    <div class="shortcut"><span class="key">⇧TAB</span> Toggle view</div>
+    <div class="shortcut"><span class="key">⇧TAB</span> Next view</div>
     <div class="shortcut"><span class="key">^N</span> Add subtask</div>
     <div class="shortcut"><span class="key">P</span> Cycle status</div>
     <div class="shortcut"><span class="key">I</span> Flag priority</div>
-    <div class="shortcut"><span class="key">C</span> Cycle stars</div>
+    <div class="shortcut"><span class="key">C</span> Cycle stars / habit colour</div>
+    <div class="shortcut"><span class="key">Z</span> Zoom to fit (nebula)</div>
   </div>
 </div>
 

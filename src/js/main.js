@@ -1,16 +1,22 @@
 import { state } from './taskStore.js';
 import { startAnimLoop } from './orbitRenderer.js';
+import { startNebulaLoop, zoomToFit } from './nebulaRenderer.js';
 import {
-  toggleSettings, isSettingsOpen, setMode, toggleView,
+  toggleSettings, isSettingsOpen, setMode, toggleView, updateInputPlaceholder,
   updateTaskBox, renderList, moveHighlight,
   addTask, addSubtask, completeSubtask, deleteSubtask, deleteLastSubtask,
   completeTask, deleteTask, startEditTask, commitEdit,
   exportTasks, importTasks, cycleTaskStatus, toggleImportant,
 } from './taskModal.js';
+import {
+  addHabit, deleteHabit, startEditHabit, commitEditHabit,
+  toggleCheckin, cycleHabitColor, updateHabitBox,
+} from './habitModal.js';
 
 // ─── FOCUS / TAB MANAGEMENT ──────────────────────────────────────────────────
 const taskInput = document.getElementById('task-input');
 const taskBoxEdit = document.getElementById('task-box-edit');
+const habitBoxEdit = document.getElementById('habit-box-edit');
 let suppressInputBlur = false;
 
 // Find the next index (dir=+1 forward, dir=-1 backward) that satisfies filter.
@@ -38,24 +44,32 @@ function goToRing() {
   setMode('ring');
 }
 
-function goToInput() { setMode('adding'); taskInput.focus(); }
+function goToHabitSelect() {
+  if (!state.habits.length) return;
+  suppressInputBlur = true; taskInput.blur(); suppressInputBlur = false;
+  if (state.selectedHabitIdx < 0) state.selectedHabitIdx = 0;
+  setMode('habit-select');
+}
+
+function goToInput() { setMode(state.currentView === 'nebula' ? 'adding-habit' : 'adding'); taskInput.focus(); }
 
 function resetInputToNormal() {
   state.addingSubtaskFor = -1;
-  taskInput.placeholder = 'New mission directive…';
+  updateInputPlaceholder();
 }
 
-taskInput.addEventListener('focus', () => { if (!suppressInputBlur && state.addingSubtaskFor < 0) setMode('adding'); });
+taskInput.addEventListener('focus', () => { if (!suppressInputBlur && state.addingSubtaskFor < 0) setMode(state.currentView === 'nebula' ? 'adding-habit' : 'adding'); });
 taskInput.addEventListener('blur', () => {
   if (suppressInputBlur) return;
-  if (state.mode === 'adding' || state.mode === 'adding-sub') { resetInputToNormal(); setMode('normal'); }
+  if (state.mode === 'adding' || state.mode === 'adding-sub' || state.mode === 'adding-habit') { resetInputToNormal(); setMode('normal'); }
 });
 
 taskInput.addEventListener('keydown', e => {
   if (e.key === 'Tab') {
     e.preventDefault(); e.stopPropagation();
     if (e.shiftKey) { resetInputToNormal(); toggleView(); return; }
-    resetInputToNormal(); goToRing();
+    resetInputToNormal();
+    if (state.currentView === 'nebula') goToHabitSelect(); else goToRing();
   } else if (e.key === 'Enter') {
     const val = taskInput.value.trim();
     if (val) {
@@ -64,7 +78,7 @@ taskInput.addEventListener('keydown', e => {
         taskInput.value = '';
         return; // stay in adding-sub mode so user can keep adding subtasks
       }
-      addTask(val);
+      if (state.mode === 'adding-habit') addHabit(val); else addTask(val);
       taskInput.value = '';
     }
     resetInputToNormal(); suppressInputBlur = true; taskInput.blur(); suppressInputBlur = false; setMode('normal');
@@ -81,11 +95,18 @@ taskBoxEdit.addEventListener('keydown', e => {
 });
 taskBoxEdit.addEventListener('blur', () => { if (state.mode === 'editing' && state.selectedIdx >= 0 && state.tasks[state.selectedIdx]?.editing) commitEdit(state.selectedIdx); });
 
+habitBoxEdit?.addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.stopPropagation(); commitEditHabit(state.selectedHabitIdx); }
+  else if (e.key === 'Escape') { e.stopPropagation(); if (state.habits[state.selectedHabitIdx]) state.habits[state.selectedHabitIdx].editing = false; setMode('habit-select'); }
+});
+habitBoxEdit?.addEventListener('blur', () => { if (state.mode === 'editing-habit' && state.selectedHabitIdx >= 0 && state.habits[state.selectedHabitIdx]?.editing) commitEditHabit(state.selectedHabitIdx); });
+
 // ─── GLOBAL KEYS ─────────────────────────────────────────────────────────────
 document.addEventListener('keydown', e => {
   const active = document.activeElement;
   if (active === taskInput) return;
   if (active === taskBoxEdit) return;
+  if (active === habitBoxEdit) return;
   if (active?.classList?.contains('task-edit-input')) return;
 
   if (e.key === 'Tab' && e.shiftKey) { e.preventDefault(); toggleView(); return; }
@@ -103,17 +124,28 @@ document.addEventListener('keydown', e => {
   }
 
   const isSaturn = state.currentView === 'saturn';
+  const isNebula = state.currentView === 'nebula';
 
   switch (e.key) {
     case 'Tab':
       e.preventDefault();
-      if (state.mode === 'ring') goToInput(); else if (state.tasks.length > 0) goToRing(); else goToInput();
+      if (isNebula) {
+        if (state.mode === 'habit-select') goToInput(); else if (state.habits.length > 0) goToHabitSelect(); else goToInput();
+      } else {
+        if (state.mode === 'ring') goToInput(); else if (state.tasks.length > 0) goToRing(); else goToInput();
+      }
       break;
     case 'n': case 'N': e.preventDefault(); goToInput(); break;
 
-    // ── j: next active task (saturn) / down (list) ───────────────────────────
+    // ── j: next active task (saturn) / down (list) / next habit (nebula) ─────
     case 'j': {
       e.preventDefault();
+      if (isNebula) {
+        if (!state.habits.length) break;
+        if (state.mode !== 'habit-select') { if (state.selectedHabitIdx < 0) state.selectedHabitIdx = 0; setMode('habit-select'); break; }
+        state.selectedHabitIdx = (state.selectedHabitIdx + 1) % state.habits.length;
+        break;
+      }
       if (!state.tasks.length) break;
       if (isSaturn) {
         if (state.mode !== 'ring') { if (state.selectedIdx < 0) state.selectedIdx = firstActiveIdx(); setMode('ring'); break; }
@@ -129,9 +161,15 @@ document.addEventListener('keydown', e => {
       break;
     }
 
-    // ── k: prev active task (saturn) / up (list) ─────────────────────────────
+    // ── k: prev active task (saturn) / up (list) / prev habit (nebula) ───────
     case 'k': {
       e.preventDefault();
+      if (isNebula) {
+        if (!state.habits.length) break;
+        if (state.mode !== 'habit-select') { if (state.selectedHabitIdx < 0) state.selectedHabitIdx = 0; setMode('habit-select'); break; }
+        state.selectedHabitIdx = (state.selectedHabitIdx - 1 + state.habits.length) % state.habits.length;
+        break;
+      }
       if (!state.tasks.length) break;
       if (isSaturn) {
         if (state.mode !== 'ring') { if (state.selectedIdx < 0) state.selectedIdx = firstActiveIdx(); setMode('ring'); break; }
@@ -166,8 +204,13 @@ document.addEventListener('keydown', e => {
       break;
     }
 
-    // ── C: cycle through completed stars (saturn only) ────────────────────────
+    // ── C: cycle through completed stars (saturn) / cycle habit colour (nebula) ─
     case 'c': case 'C': {
+      if (isNebula) {
+        e.preventDefault();
+        if (state.selectedHabitIdx >= 0) cycleHabitColor(state.selectedHabitIdx);
+        break;
+      }
       if (!isSaturn) break;
       e.preventDefault();
       if (!state.tasks.some(t => t.done)) break;
@@ -177,9 +220,16 @@ document.addEventListener('keydown', e => {
       break;
     }
 
+    // ── Z: zoom to fit whole nebula (nebula only) ─────────────────────────────
+    case 'z': case 'Z': {
+      if (isNebula) { e.preventDefault(); zoomToFit(); }
+      break;
+    }
+
     // ── Arrow Down: next subtask (saturn, clamped) / next item (list) ──────────
     case 'ArrowDown': {
       e.preventDefault();
+      if (isNebula) break;
       if (!state.tasks.length) break;
       if (isSaturn) {
         if (state.mode !== 'ring') { if (state.selectedIdx < 0) state.selectedIdx = 0; setMode('ring'); break; }
@@ -198,6 +248,7 @@ document.addEventListener('keydown', e => {
     // ── Arrow Up: prev subtask (saturn, clamped) / prev item (list) ────────────
     case 'ArrowUp': {
       e.preventDefault();
+      if (isNebula) break;
       if (!state.tasks.length) break;
       if (isSaturn) {
         if (state.mode !== 'ring') { if (state.selectedIdx < 0) state.selectedIdx = 0; setMode('ring'); break; }
@@ -213,6 +264,7 @@ document.addEventListener('keydown', e => {
 
     case ' ':
       e.preventDefault();
+      if (isNebula) { if (state.selectedHabitIdx >= 0) toggleCheckin(state.selectedHabitIdx); break; }
       if (state.selectedIdx >= 0) {
         if (state.selectedSubIdx >= 0) completeSubtask(state.selectedIdx, state.selectedSubIdx);
         else completeTask(state.selectedIdx);
@@ -220,18 +272,22 @@ document.addEventListener('keydown', e => {
       break;
 
     case 'i': case 'I':
+      if (isNebula) break;
       if (state.selectedIdx >= 0 && state.selectedSubIdx < 0) toggleImportant(state.selectedIdx);
       break;
 
     case 'p': case 'P':
+      if (isNebula) break;
       if (state.selectedIdx >= 0 && state.selectedSubIdx < 0) cycleTaskStatus(state.selectedIdx);
       break;
 
     case 'e': case 'E':
+      if (isNebula) { if (state.selectedHabitIdx >= 0) startEditHabit(state.selectedHabitIdx); break; }
       if (state.selectedIdx >= 0 && state.selectedSubIdx < 0) startEditTask(state.selectedIdx);
       break;
 
     case 'Delete':
+      if (isNebula) { if (state.selectedHabitIdx >= 0) deleteHabit(state.selectedHabitIdx); break; }
       if (state.selectedIdx >= 0) {
         if (state.selectedSubIdx >= 0) deleteSubtask(state.selectedIdx, state.selectedSubIdx);
         else deleteTask(state.selectedIdx);
@@ -239,6 +295,7 @@ document.addEventListener('keydown', e => {
       break;
 
     case 'Backspace':
+      if (isNebula) { if (active === document.body && state.selectedHabitIdx >= 0) { e.preventDefault(); deleteHabit(state.selectedHabitIdx); } break; }
       if (active === document.body && state.selectedIdx >= 0) {
         e.preventDefault();
         if (state.selectedSubIdx >= 0) deleteSubtask(state.selectedIdx, state.selectedSubIdx);
@@ -248,6 +305,7 @@ document.addEventListener('keydown', e => {
 
     case 'Escape':
       if (isSettingsOpen()) { toggleSettings(); break; }
+      if (state.mode === 'habit-select') { state.selectedHabitIdx = -1; setMode('normal'); break; }
       if (state.mode === 'ring') {
         state.selectedIdx = -1; state.selectedSubIdx = -1; setMode('normal');
         if (!isSaturn) moveHighlight();
@@ -263,7 +321,8 @@ document.getElementById('import-btn')?.addEventListener('click', () => document.
 document.getElementById('import-file')?.addEventListener('change', importTasks);
 
 // ─── ANIMATION LOOP + INIT ───────────────────────────────────────────────────
-startAnimLoop(updateTaskBox);
+startAnimLoop(() => { updateTaskBox(); updateHabitBox(); });
+startNebulaLoop();
 
 if (state.tasks.length > 0) state.selectedIdx = 0;
 taskInput.focus();
